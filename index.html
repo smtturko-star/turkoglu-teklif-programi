@@ -107,8 +107,41 @@ const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&
 const toast=m=>{let x=document.getElementById('toast');x.textContent=m;x.style.display='block';setTimeout(()=>x.style.display='none',2500)};
 function getCfg(){try{return JSON.parse(localStorage.getItem(SBKEY)||'{}')}catch{return {}}}
 function saveConfig(){let u=document.getElementById('cfgUrl').value.trim(),k=document.getElementById('cfgKey').value.trim();if(!u||!k)return alert('Proje URL ve Publishable/Anon Key gerekli.');localStorage.setItem(SBKEY,JSON.stringify({u,k}));location.reload()}
-function initClient(){let c=getCfg();if(c.u&&c.k){client=window.supabase.createClient(c.u,c.k);document.getElementById('setupBox').classList.add('hidden');document.getElementById('authBox').classList.remove('hidden');return true}return false}
-async function login(){let e=email.value.trim(),p=password.value;if(!e||!p)return;let r=await client.auth.signInWithPassword({email:e,password:p});if(r.error)authMsg.textContent=r.error.message}
+function initClient() {
+  try {
+    const c = getCfg();
+
+    if (!c || !c.u || !c.k) {
+      document.getElementById('setupBox').classList.remove('hidden');
+      document.getElementById('authBox').classList.add('hidden');
+      return false;
+    }
+
+    if (!window.supabase || typeof window.supabase.createClient !== 'function') {
+      console.error('Supabase kütüphanesi yüklenmemiş.');
+      alert('Supabase bağlantı kütüphanesi yüklenemedi. Sayfayı yenileyin.');
+      return false;
+    }
+
+    const url = c.u.trim();
+    const key = c.k.trim();
+
+    client = window.supabase.createClient(url, key);
+
+    document.getElementById('setupBox').classList.add('hidden');
+    document.getElementById('authBox').classList.remove('hidden');
+
+    console.log('Supabase bağlantısı hazır:', url);
+
+    return true;
+
+  } catch (error) {
+    console.error('Supabase başlatma hatası:', error);
+    alert('Supabase bağlantısı başlatılamadı: ' + error.message);
+    return false;
+  }
+}
+  async function login(){let e=email.value.trim(),p=password.value;if(!e||!p)return;let r=await client.auth.signInWithPassword({email:e,password:p});if(r.error)authMsg.textContent=r.error.message}
 async function signup(){let e=email.value.trim(),p=password.value;if(!e||p.length<6)return authMsg.textContent='E-posta ve en az 6 karakter şifre girin.';let r=await client.auth.signUp({email:e,password:p});authMsg.textContent=r.error?r.error.message:'Kayıt tamam. E-posta doğrulaması açıksa gelen e-postayı onaylayın.'}
 async function logout(){await client.auth.signOut();location.reload()}
 async function start(){if(!initClient())return;let s=await client.auth.getSession();user=s.data.session?.user;if(user){showApp();await loadAll()}client.auth.onAuthStateChange((_e,s)=>{if(s?.user){user=s.user;showApp();loadAll()}})}
