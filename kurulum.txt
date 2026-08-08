@@ -1,0 +1,22 @@
+TÜRKOĞLU ELEKTRİK ELEKTRONİK - ONLINE CCTV TEKLİF & İŞ TAKİP
+
+1) Supabase SQL Düzenleyici'de storage.sql dosyasının içeriğini çalıştırın.
+2) index.html dosyasını bir web hosting'e yükleyin.
+3) İlk açılışta Supabase Project URL ve Publishable/Anon Key girilir.
+   - Project URL: Supabase proje ana sayfasındaki https://....supabase.co adresi.
+   - Publishable/Anon Key: sadece public client key kullanın.
+   - Service role / secret key KULLANMAYIN.
+4) Yeni hesap oluşturup giriş yapın.
+5) Firma Ayarları'ndan logo ve iletişim bilgilerini girin.
+6) Ürünlere gerçek fotoğraf yükleyin.
+7) Müşteri > Teklif > İş > Ödeme takibi şeklinde kullanın.
+
+MOBİL:
+Ayrı uygulama gerekmez. Siteyi telefon Chrome/Safari'de açmanız yeterlidir.
+
+YAYINLAMA:
+Bu klasör statik web sitesi olarak Netlify, Vercel veya GitHub Pages'e yüklenebilir.
+Netlify'da klasörü sürükle-bırak yöntemiyle yayınlayabilirsiniz.
+
+KDV:
+Varsayılan %20; ürün bazında %10 veya %1 seçilebilir. KDV mevzuatı değişirse Firma Ayarları/ürün KDV oranları güncellenmelidir.
