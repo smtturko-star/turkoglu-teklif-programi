@@ -23,6 +23,10 @@ label{font-size:12px;font-weight:800;display:block;margin-bottom:5px}.muted{colo
 table{width:100%;border-collapse:collapse}th,td{border-bottom:1px solid var(--line);padding:9px;text-align:left;font-size:13px;vertical-align:middle}th{background:#f8fafc}
 .thumb{width:65px;height:52px;object-fit:contain;border:1px solid #ddd;border-radius:6px;background:#fff}.products{display:grid;grid-template-columns:repeat(auto-fill,minmax(175px,1fr));gap:10px}.p{background:#fff;border:1px solid var(--line);border-radius:10px;padding:8px;cursor:pointer}.p:hover{border-color:#111827}.p img{width:100%;height:105px;object-fit:contain}
 .login{max-width:430px;margin:8vh auto}.hidden{display:none!important}.modal{position:fixed;inset:0;background:#0008;display:none;align-items:center;justify-content:center;padding:15px;z-index:20}.modal.show{display:flex}.modalbox{background:#fff;border-radius:13px;width:min(720px,100%);max-height:90vh;overflow:auto;padding:20px}
+.modalhead{display:flex;align-items:center;gap:10px;margin-bottom:14px}.modalhead h2{margin:0;flex:1}
+.iconclose{background:#f3f4f6;color:#111827;width:38px;height:38px;padding:0;font-size:22px;line-height:1;border-radius:50%}
+.rowactions{display:flex;gap:6px;flex-wrap:wrap}.rowactions button{padding:7px 10px;font-size:12px}
+.preview-img{max-width:180px;max-height:140px;object-fit:contain;border:1px solid var(--line);border-radius:8px;padding:5px;background:#fff}
 #toast{position:fixed;right:16px;bottom:16px;background:#111827;color:#fff;padding:12px 15px;border-radius:9px;display:none;z-index:50}
 #quotePrint{background:#fff;padding:28px;max-width:950px;margin:auto}.qhead{display:flex;justify-content:space-between;border-bottom:3px solid #111827;padding-bottom:15px}.qlogo{width:100px;height:75px;object-fit:contain}.total{font-size:20px;font-weight:900}
 @media(max-width:760px){.grid,.grid3{grid-template-columns:1fr}header{position:relative}nav{top:0}.card{padding:14px}table{display:block;overflow-x:auto;white-space:nowrap}.qhead{display:block}.qhead .right{text-align:left;margin-top:12px}}
@@ -71,15 +75,15 @@ table{width:100%;border-collapse:collapse}th,td{border-bottom:1px solid var(--li
 </div>
 </section>
 
-<section id="customers" class="page"><div class="card"><div class="actions"><h2 style="margin-right:auto">Müşteriler</h2><button class="green" onclick="customerModal()">+ Müşteri</button></div><table><thead><tr><th>Firma</th><th>Yetkili</th><th>Telefon</th><th>Adres</th><th></th></tr></thead><tbody id="customerRows"></tbody></table></div></section>
+<section id="customers" class="page"><div class="card"><div class="actions"><h2 style="margin-right:auto">Müşteriler</h2><button class="green" onclick="customerModal()">+ Müşteri</button></div><table><thead><tr><th>Firma</th><th>Yetkili</th><th>Telefon</th><th>Adres</th><th>İşlemler</th></tr></thead><tbody id="customerRows"></tbody></table></div></section>
 
-<section id="products" class="page"><div class="card"><div class="actions"><h2 style="margin-right:auto">Ürünler</h2><button class="green" onclick="productModal()">+ Ürün</button></div><p class="muted">Gerçek ürün fotoğrafını telefondan da yükleyebilirsiniz.</p><table><thead><tr><th>Görsel</th><th>Ürün</th><th>Model</th><th>Kategori</th><th>Satış</th><th>KDV</th><th></th></tr></thead><tbody id="productRows"></tbody></table></div></section>
+<section id="products" class="page"><div class="card"><div class="actions"><h2 style="margin-right:auto">Ürünler</h2><button class="green" onclick="productModal()">+ Ürün</button></div><p class="muted">Gerçek ürün fotoğrafını telefondan da yükleyebilirsiniz.</p><table><thead><tr><th>Görsel</th><th>Ürün</th><th>Model</th><th>Kategori</th><th>Satış</th><th>KDV</th><th>İşlemler</th></tr></thead><tbody id="productRows"></tbody></table></div></section>
 
-<section id="quotes" class="page"><div class="card"><div class="actions"><h2 style="margin-right:auto">Teklifler</h2><button class="green" onclick="newQuote()">+ Yeni Teklif</button></div><table><thead><tr><th>No</th><th>Tarih</th><th>Müşteri</th><th>Durum</th><th>Toplam</th><th></th></tr></thead><tbody id="quoteRows"></tbody></table></div></section>
+<section id="quotes" class="page"><div class="card"><div class="actions"><h2 style="margin-right:auto">Teklifler</h2><button class="green" onclick="newQuote()">+ Yeni Teklif</button></div><table><thead><tr><th>No</th><th>Tarih</th><th>Müşteri</th><th>Durum</th><th>Toplam</th><th>İşlemler</th></tr></thead><tbody id="quoteRows"></tbody></table></div></section>
 
-<section id="jobs" class="page"><div class="card"><div class="actions"><h2 style="margin-right:auto">İş Takibi</h2><button class="green" onclick="jobModal()">+ Yeni İş</button></div><table><thead><tr><th>Müşteri</th><th>İş</th><th>Durum</th><th>Montaj</th><th>Kalan</th><th></th></tr></thead><tbody id="jobRows"></tbody></table></div></section>
+<section id="jobs" class="page"><div class="card"><div class="actions"><h2 style="margin-right:auto">İş Takibi</h2><button class="green" onclick="jobModal()">+ Yeni İş</button></div><table><thead><tr><th>Müşteri</th><th>İş</th><th>Durum</th><th>Montaj</th><th>Kalan</th><th>İşlemler</th></tr></thead><tbody id="jobRows"></tbody></table></div></section>
 
-<section id="payments" class="page"><div class="card"><div class="actions"><h2 style="margin-right:auto">Ödemeler</h2><button class="green" onclick="paymentModal()">+ Ödeme</button></div><table><thead><tr><th>Tarih</th><th>Müşteri</th><th>Tutar</th><th>Yöntem</th><th>Açıklama</th></tr></thead><tbody id="paymentRows"></tbody></table></div></section>
+<section id="payments" class="page"><div class="card"><div class="actions"><h2 style="margin-right:auto">Ödemeler</h2><button class="green" onclick="paymentModal()">+ Ödeme</button></div><table><thead><tr><th>Tarih</th><th>Müşteri</th><th>Tutar</th><th>Yöntem</th><th>Açıklama</th><th>İşlemler</th></tr></thead><tbody id="paymentRows"></tbody></table></div></section>
 
 <section id="settings" class="page"><div class="card"><h2>Firma Ayarları</h2><div class="grid">
 <div><label>Şirket Adı</label><input id="sName"></div><div><label>Telefon</label><input id="sPhone"></div>
@@ -98,2030 +102,343 @@ table{width:100%;border-collapse:collapse}th,td{border-bottom:1px solid var(--li
 <div id="modal" class="modal"><div class="modalbox" id="modalBox"></div></div><div id="toast"></div>
 
 <script>
+
 const SBKEY='turkoglu_sb_cfg';
-let client=null, user=null, editing=null, quoteDraft={items:[]};
+let client=null,user=null,editing=null,quoteDraft={items:[]};
 let customers=[],products=[],quotes=[],jobs=[],payments=[],company={};
 
+const $=id=>document.getElementById(id);
 const money=n=>new Intl.NumberFormat('tr-TR',{style:'currency',currency:'TRY'}).format(Number(n)||0);
 const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
-const toast=m=>{let x=document.getElementById('toast');x.textContent=m;x.style.display='block';setTimeout(()=>x.style.display='none',2500)};
+const num=v=>Number.isFinite(Number(v))?Number(v):0;
+const toast=m=>{const x=$('toast');if(!x)return;x.textContent=m;x.style.display='block';clearTimeout(window.__toast);window.__toast=setTimeout(()=>x.style.display='none',2500)};
+const err=e=>e?.message||String(e||'Bilinmeyen hata');
+const today=()=>new Date().toISOString().slice(0,10);
+const cfgKey=(name)=>String(name||'').replace(/[^a-zA-Z0-9._-]/g,'_').slice(0,120);
+
 function getCfg(){try{return JSON.parse(localStorage.getItem(SBKEY)||'{}')}catch{return {}}}
-function saveConfig(){let u=document.getElementById('cfgUrl').value.trim(),k=document.getElementById('cfgKey').value.trim();if(!u||!k)return alert('Proje URL ve Publishable/Anon Key gerekli.');localStorage.setItem(SBKEY,JSON.stringify({u,k}));location.reload()}
-function initClient() {
-  try {
-    const c = getCfg();
+function saveConfig(){
+  const u=$('cfgUrl')?.value.trim(), k=$('cfgKey')?.value.trim();
+  if(!/^https:\/\/[a-z0-9-]+\.supabase\.co\/?$/.test(u||'')) return alert('Geçerli Supabase Project URL girin.');
+  if(!k) return alert('Publishable / Anon Key gerekli.');
+  localStorage.setItem(SBKEY,JSON.stringify({u:u.replace(/\/$/,''),k}));
+  location.reload();
+}
+function clearConfig(){localStorage.removeItem(SBKEY);location.reload()}
 
-    if (!c || !c.u || !c.k) {
-      document.getElementById('setupBox').classList.remove('hidden');
-      document.getElementById('authBox').classList.add('hidden');
-      return false;
-    }
-
-    if (!window.supabase || typeof window.supabase.createClient !== 'function') {
-      console.error('Supabase kütüphanesi yüklenmemiş.');
-      alert('Supabase bağlantı kütüphanesi yüklenemedi. Sayfayı yenileyin.');
-      return false;
-    }
-
-    const url = c.u.trim();
-    const key = c.k.trim();
-
-    client = window.supabase.createClient(url, key);
-
-    document.getElementById('setupBox').classList.add('hidden');
-    document.getElementById('authBox').classList.remove('hidden');
-
-    console.log('Supabase bağlantısı hazır:', url);
-
+function initClient(){
+  try{
+    const c=getCfg();
+    if(!c.u||!c.k){$('setupBox').classList.remove('hidden');$('authBox').classList.add('hidden');return false}
+    if(!window.supabase?.createClient){alert('Supabase kütüphanesi yüklenemedi.');return false}
+    client=window.supabase.createClient(c.u.trim(),c.k.trim(),{
+      auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}
+    });
+    $('setupBox').classList.add('hidden');$('authBox').classList.remove('hidden');
     return true;
-
-  } catch (error) {
-    console.error('Supabase başlatma hatası:', error);
-    alert('Supabase bağlantısı başlatılamadı: ' + error.message);
-    return false;
-  }
+  }catch(e){alert('Supabase başlatılamadı: '+err(e));return false}
 }
-  async function login(){let e=email.value.trim(),p=password.value;if(!e||!p)return;let r=await client.auth.signInWithPassword({email:e,password:p});if(r.error)authMsg.textContent=r.error.message}
-async function signup(){let e=email.value.trim(),p=password.value;if(!e||p.length<6)return authMsg.textContent='E-posta ve en az 6 karakter şifre girin.';let r=await client.auth.signUp({email:e,password:p});authMsg.textContent=r.error?r.error.message:'Kayıt tamam. E-posta doğrulaması açıksa gelen e-postayı onaylayın.'}
+async function login(){
+  const e=$('email')?.value.trim(),p=$('password')?.value||'';
+  if(!e||!p)return $('authMsg').textContent='E-posta ve şifre gerekli.';
+  $('authMsg').textContent='Giriş yapılıyor...';
+  const r=await client.auth.signInWithPassword({email:e,password:p});
+  if(r.error)$('authMsg').textContent=r.error.message;
+}
+async function signup(){
+  const e=$('email')?.value.trim(),p=$('password')?.value||'';
+  if(!e||p.length<6)return $('authMsg').textContent='E-posta ve en az 6 karakter şifre girin.';
+  const r=await client.auth.signUp({email:e,password:p});
+  $('authMsg').textContent=r.error?r.error.message:'Kayıt tamam. E-posta doğrulaması açıksa gelen e-postayı onaylayın.';
+}
 async function logout(){await client.auth.signOut();location.reload()}
-async function start(){if(!initClient())return;let s=await client.auth.getSession();user=s.data.session?.user;if(user){showApp();await loadAll()}client.auth.onAuthStateChange((_e,s)=>{if(s?.user){user=s.user;showApp();loadAll()}})}
-function showApp(){loginView.classList.add('hidden');app.classList.remove('hidden');userMail.textContent=user.email||''}
-function page(id){document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));document.getElementById(id).classList.add('active');document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('active',b.dataset.page===id));if(id==='printPage')return}
-async function loadAll(){let [a,b,c,d,e,f]=await Promise.all([client.from('customers').select('*').order('created_at',{ascending:false}),client.from('products').select('*').order('created_at',{ascending:false}),client.from('quotes').select('*,customers(company_name)').order('created_at',{ascending:false}),client.from('jobs').select('*,customers(company_name)').order('created_at',{ascending:false}),client.from('payments').select('*,customers(company_name)').order('payment_date',{ascending:false}),client.from('company_settings').select('*').maybeSingle()]);customers=a.data||[];products=b.data||[];quotes=c.data||[];jobs=d.data||[];payments=e.data||[];company=f.data||{};render()}
-function render(){kc.textContent=customers.length;kp.textContent=products.length;kq.textContent=quotes.length;kj.textContent=jobs.filter(j=>!['Tamamlandı','İptal'].includes(j.status)).length;kd.textContent=jobs.filter(j=>j.status==='Tamamlandı').length;kr.textContent=money(jobs.reduce((a,j)=>a+Number(j.remaining_amount||0),0));renderCustomers();renderProducts();renderQuotes();renderJobs();renderPayments();loadSettingsUI()}
-function modal(html){modalBox.innerHTML=html;document.getElementById('modal').classList.add('show')}
-function closeModal(){document.getElementById('modal').classList.remove('show');editing=null}
-function customerModal(id=null){let c=customers.find(x=>x.id===id)||{};editing=id;modal(`<h2>${id?'Müşteri Düzenle':'Müşteri Ekle'}</h2><div class="grid"><div><label>Firma / Müşteri</label><input id="cn" value="${esc(c.company_name)}"></div><div><label>Yetkili</label><input id="cp" value="${esc(c.contact_person)}"></div><div><label>Telefon</label><input id="ct" value="${esc(c.phone)}"></div><div><label>WhatsApp</label><input id="cw" value="${esc(c.whatsapp)}"></div><div><label>E-posta</label><input id="ce" value="${esc(c.email)}"></div><div><label>Vergi No</label><input id="cx" value="${esc(c.tax_number)}"></div><div style="grid-column:1/-1"><label>Adres</label><textarea id="ca">${esc(c.address)}</textarea></div><div style="grid-column:1/-1"><label>Not</label><textarea id="co">${esc(c.notes)}</textarea></div></div><div class="actions" style="margin-top:14px"><button class="green" onclick="saveCustomer()">Kaydet</button><button class="light" onclick="closeModal()">İptal</button></div>`)}
-async function saveCustomer() {
-  const o = {
-    company_name: document.getElementById('cn')?.value.trim() || '',
-    contact_person: document.getElementById('cp')?.value.trim() || '',
-    phone: document.getElementById('ct')?.value.trim() || '',
-    whatsapp: document.getElementById('cw')?.value.trim() || '',
-    email: document.getElementById('ce')?.value.trim() || '',
-    tax_number: document.getElementById('cx')?.value.trim() || '',
-    address: document.getElementById('ca')?.value.trim() || '',
-    notes: document.getElementById('co')?.value.trim() || ''
-  };
 
-  if (!o.company_name) {
-    return alert('Firma adı gerekli.');
-  }
+async function start(){
+  if(!initClient())return;
+  const s=await client.auth.getSession();
+  user=s.data.session?.user||null;
+  if(user){showApp();await loadAll()}
+  client.auth.onAuthStateChange((event,session)=>{
+    if(session?.user){user=session.user;showApp();setTimeout(loadAll,0)}
+    else if(event==='SIGNED_OUT'){user=null;$('app').classList.add('hidden');$('loginView').classList.remove('hidden')}
+  });
+}
+function showApp(){$('loginView').classList.add('hidden');$('app').classList.remove('hidden');$('userMail').textContent=user?.email||''}
+function page(id){
+  document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));
+  $(id)?.classList.add('active');
+  document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('active',b.dataset.page===id));
+}
+async function loadAll(){
+  if(!user)return;
+  const results=await Promise.all([
+    client.from('customers').select('*').order('created_at',{ascending:false}),
+    client.from('products').select('*').order('created_at',{ascending:false}),
+    client.from('quotes').select('*,customers(company_name,contact_person,phone,address,email)').order('created_at',{ascending:false}),
+    client.from('jobs').select('*,customers(company_name,contact_person,phone,address)').order('created_at',{ascending:false}),
+    client.from('payments').select('*,customers(company_name)').order('payment_date',{ascending:false}),
+    client.from('company_settings').select('*').maybeSingle()
+  ]);
+  const bad=results.find(r=>r.error);
+  if(bad?.error){console.error(bad.error);toast('Veriler yüklenemedi: '+bad.error.message);return}
+  [customers,products,quotes,jobs,payments]=results.slice(0,5).map(r=>r.data||[]);
+  company=results[5].data||{};
+  render();
+}
+function render(){
+  $('kc').textContent=customers.length;$('kp').textContent=products.length;$('kq').textContent=quotes.length;
+  $('kj').textContent=jobs.filter(j=>!['Tamamlandı','İptal'].includes(j.status)).length;
+  $('kd').textContent=jobs.filter(j=>j.status==='Tamamlandı').length;
+  $('kr').textContent=money(jobs.reduce((a,j)=>a+num(j.remaining_amount),0));
+  renderCustomers();renderProducts();renderQuotes();renderJobs();renderPayments();loadSettingsUI();
+}
+function modal(html){
+  $('modalBox').innerHTML=`<div class="modalhead"><div style="flex:1"></div><button type="button" class="iconclose" aria-label="Kapat" onclick="closeModal()">×</button></div>${html}`;
+  $('modal').classList.add('show');
+}
+function closeModal(){$('modal').classList.remove('show');$('modalBox').innerHTML='';editing=null}
+$('modal')?.addEventListener('click',e=>{if(e.target.id==='modal')closeModal()});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('modal')?.classList.contains('show'))closeModal()});
 
-  const r = editing
-    ? await client.from('customers').update(o).eq('id', editing)
-    : await client.from('customers').insert(o);
-
-  if (r.error) {
-    return alert(r.error.message);
-  }
-
-  closeModal();
-  await loadAll();
+function customerModal(id=null){
+  const c=customers.find(x=>x.id===id)||{};editing=id;
+  modal(`<h2>${id?'Müşteri Düzenle':'Müşteri Ekle'}</h2><div class="grid">
+  <div><label>Firma / Müşteri</label><input id="cn" value="${esc(c.company_name)}"></div>
+  <div><label>Yetkili</label><input id="cp" value="${esc(c.contact_person)}"></div>
+  <div><label>Telefon</label><input id="ct" value="${esc(c.phone)}"></div>
+  <div><label>WhatsApp</label><input id="cw" value="${esc(c.whatsapp)}"></div>
+  <div><label>E-posta</label><input id="ce" type="email" value="${esc(c.email)}"></div>
+  <div><label>Vergi No</label><input id="cx" value="${esc(c.tax_number)}"></div>
+  <div style="grid-column:1/-1"><label>Adres</label><textarea id="ca">${esc(c.address)}</textarea></div>
+  <div style="grid-column:1/-1"><label>Not</label><textarea id="co">${esc(c.notes)}</textarea></div>
+  </div><div class="actions" style="margin-top:14px"><button class="green" onclick="saveCustomer()">Kaydet</button><button class="light" onclick="closeModal()">İptal</button></div>`);
+}
+async function saveCustomer(){
+  const o={company_name:$('cn')?.value.trim()||'',contact_person:$('cp')?.value.trim()||'',phone:$('ct')?.value.trim()||'',whatsapp:$('cw')?.value.trim()||'',email:$('ce')?.value.trim()||'',tax_number:$('cx')?.value.trim()||'',address:$('ca')?.value.trim()||'',notes:$('co')?.value.trim()||''};
+  if(!o.company_name)return alert('Firma adı gerekli.');
+  const r=editing?await client.from('customers').update(o).eq('id',editing):await client.from('customers').insert(o);
+  if(r.error)return alert(r.error.message);closeModal();await loadAll();toast('Müşteri kaydedildi.');
+}
+async function deleteCustomer(id){
+  const c=customers.find(x=>x.id===id);
+  if(!c)return;
+  if(!confirm(`"${c.company_name||'Bu müşteri'}" kaydını silmek istediğinize emin misiniz? Bu müşteriye bağlı teklifler, işler ve ödemeler de silinecektir.`))return;
+  const r=await client.rpc('delete_customer_cascade',{p_customer_id:id});
+  if(r.error)return alert(err(r.error));
+  await loadAll();toast('Müşteri ve bağlı kayıtlar silindi.');
+}
+function renderCustomers(){
+  $('customerRows').innerHTML=customers.map(c=>`<tr><td><b>${esc(c.company_name)}</b></td><td>${esc(c.contact_person)}</td><td>${esc(c.phone)}</td><td>${esc(c.address)}</td><td><div class="rowactions"><button onclick="customerModal('${c.id}')">Düzenle</button><button class="red" onclick="deleteCustomer('${c.id}')">Sil</button></div></td></tr>`).join('')||'<tr><td colspan="5">Müşteri yok.</td></tr>';
 }
 
-function renderCustomers() {
-  customerRows.innerHTML =
-    customers.map(c => `
-      <tr>
-        <td><b>${esc(c.company_name || '')}</b></td>
-        <td>${esc(c.contact_person || '')}</td>
-        <td>${esc(c.phone || '')}</td>
-        <td>${esc(c.address || '')}</td>
-        <td>
-          <button onclick="customerModal('${c.id}')">
-            Düzenle
-          </button>
-        </td>
-      </tr>
-    `).join('') || 'Müşteri yok.';
+async function upload(file,path){
+  if(!file)return null;
+  if(!file.type.startsWith('image/'))throw new Error('Sadece görsel dosyası yükleyebilirsiniz.');
+  if(file.size>5*1024*1024)throw new Error('Görsel en fazla 5 MB olabilir.');
+  const r=await client.storage.from('company-assets').upload(path,file,{upsert:false,cacheControl:'3600',contentType:file.type});
+  if(r.error)throw r.error;
+  return client.storage.from('company-assets').getPublicUrl(path).data.publicUrl;
+}
+function productModal(id=null){
+  const p=products.find(x=>x.id===id)||{name:'',brand:'',model:'',category:'',purchase_price:0,sale_price:0,vat_rate:company.default_vat_rate||20,stock:0,description:'',image_url:null};editing=id;
+  modal(`<h2>${id?'Ürün Düzenle':'Ürün Ekle'}</h2><div class="grid">
+  <div><label>Ürün Adı</label><input id="pn" value="${esc(p.name)}"></div><div><label>Marka</label><input id="pb" value="${esc(p.brand)}"></div>
+  <div><label>Model</label><input id="pm" value="${esc(p.model)}"></div><div><label>Kategori</label><input id="pc" value="${esc(p.category)}"></div>
+  <div><label>Alış Fiyatı</label><input id="pco" type="number" min="0" step="0.01" value="${num(p.purchase_price)}"></div>
+  <div><label>Satış Fiyatı</label><input id="pps" type="number" min="0" step="0.01" value="${num(p.sale_price)}"></div>
+  <div><label>KDV</label><select id="pv"><option value="20" ${num(p.vat_rate)===20?'selected':''}>%20</option><option value="10" ${num(p.vat_rate)===10?'selected':''}>%10</option><option value="1" ${num(p.vat_rate)===1?'selected':''}>%1</option></select></div>
+  <div><label>Stok</label><input id="pst" type="number" min="0" step="1" value="${num(p.stock)}"></div>
+  <div style="grid-column:1/-1"><label>Açıklama</label><textarea id="pd">${esc(p.description)}</textarea></div>
+  <div style="grid-column:1/-1"><label>Gerçek Ürün Görseli (maks. 5 MB)</label><input id="pi" type="file" accept="image/*"></div>
+  ${p.image_url?`<div style="grid-column:1/-1"><label>Mevcut Görsel</label><br><img src="${esc(p.image_url)}" style="width:120px;height:120px;object-fit:contain;border:1px solid #ddd;border-radius:8px;padding:5px"></div>`:''}
+  </div><div class="actions" style="margin-top:14px"><button class="green" onclick="saveProduct()">Kaydet</button><button class="light" onclick="closeModal()">İptal</button></div>`);
+  $('pi')?.addEventListener('change',e=>{
+    const file=e.target.files?.[0]; if(!file)return;
+    if(!file.type.startsWith('image/')||file.size>5*1024*1024){e.target.value='';return alert('Sadece 5 MB’a kadar görsel yükleyebilirsiniz.');}
+    const url=URL.createObjectURL(file);
+    let preview=$('productUploadPreview');
+    if(!preview){preview=document.createElement('div');preview.id='productUploadPreview';preview.style.marginTop='8px';$('pi').parentElement.appendChild(preview);}
+    preview.innerHTML=`<img class="preview-img" src="${url}" alt="Yeni ürün görseli">`;
+  });
+}
+async function saveProduct(){
+  try{
+    const old=products.find(x=>x.id===editing);let image_url=old?.image_url||null;const file=$('pi')?.files?.[0];
+    if(file)image_url=await upload(file,`${user.id}/products/${crypto.randomUUID()}-${cfgKey(file.name)}`);
+    const o={name:$('pn')?.value.trim()||'',brand:$('pb')?.value.trim()||'',model:$('pm')?.value.trim()||'',category:$('pc')?.value.trim()||'',purchase_price:Math.max(0,num($('pco')?.value)),sale_price:Math.max(0,num($('pps')?.value)),vat_rate:num($('pv')?.value)||20,stock:Math.max(0,Math.floor(num($('pst')?.value))),description:$('pd')?.value.trim()||'',image_url};
+    if(!o.name)return alert('Ürün adı gerekli.');
+    const r=editing?await client.from('products').update(o).eq('id',editing):await client.from('products').insert(o);
+    if(r.error)throw r.error;closeModal();await loadAll();toast('Ürün kaydedildi.');
+  }catch(e){alert(err(e))}
+}
+async function deleteProduct(id){
+  const p=products.find(x=>x.id===id);
+  if(!p)return;
+  if(!confirm(`"${p.name||'Bu ürün'}" kaydını silmek istediğinize emin misiniz? Tekliflerdeki ürün geçmişi korunur.`))return;
+  const r=await client.from('products').delete().eq('id',id);
+  if(r.error)return alert(err(r.error));
+  await loadAll();toast('Ürün silindi.');
+}
+function renderProducts(){
+  $('productRows').innerHTML=products.map(p=>`<tr><td>${p.image_url?`<img class="thumb" src="${esc(p.image_url)}" alt="${esc(p.name)}">`:'-'}</td><td><b>${esc(p.name)}</b><br>${esc(p.brand)}</td><td>${esc(p.model)}</td><td>${esc(p.category)}</td><td>${money(p.sale_price)}</td><td>%${num(p.vat_rate)}</td><td><div class="rowactions"><button onclick="productModal('${p.id}')">Düzenle</button><button class="red" onclick="deleteProduct('${p.id}')">Sil</button></div></td></tr>`).join('')||'<tr><td colspan="7">Ürün yok.</td></tr>';
 }
 
-/* =========================
-   DOSYA / GÖRSEL YÜKLEME
-========================= */
-
-async function upload(file, path) {
-  if (!file) return null;
-
-  const r = await client
-    .storage
-    .from('company-assets')
-    .upload(path, file, {
-      upsert: true
-    });
-
-  if (r.error) {
-    throw r.error;
-  }
-
-  const p = client
-    .storage
-    .from('company-assets')
-    .getPublicUrl(path);
-
-  return p.data.publicUrl;
+function newQuote(){quoteDraft={items:[],discount:0,labor:0,vat:company.default_vat_rate||20};quoteEditor()}
+function quoteEditor(){
+  modal(`<h2>Yeni Teklif</h2><div class="grid3">
+  <div><label>Müşteri</label><select id="qc"><option value="">Seçin</option>${customers.map(c=>`<option value="${c.id}">${esc(c.company_name)}</option>`).join('')}</select></div>
+  <div><label>Teklif No</label><input id="qn" value="TEK-${new Date().getFullYear()}-${String(quotes.length+1).padStart(4,'0')}"></div>
+  <div><label>Tarih</label><input id="qd" type="date" value="${today()}"></div></div>
+  <h3>Ürünler</h3><div class="products">${products.map(p=>`<div class="p" onclick="addQuoteItem('${p.id}')">${p.image_url?`<img src="${esc(p.image_url)}" alt="">`:''}<div><b>${esc(p.name)}</b><br><span>${esc(p.brand)} ${esc(p.model)}</span><br><strong>${money(p.sale_price)} + KDV %${num(p.vat_rate)||20}</strong></div></div>`).join('')||'<p>Önce ürün ekleyin.</p>'}</div>
+  <div style="margin-top:15px"><table><thead><tr><th>Ürün</th><th>Adet</th><th>Birim</th><th>KDV</th><th>Toplam</th><th></th></tr></thead><tbody id="qitems"></tbody></table></div>
+  <div class="grid3" style="margin-top:12px"><div><label>İşçilik</label><input id="ql" type="number" min="0" step="0.01" value="0" oninput="renderQuoteDraft()"></div><div><label>İskonto</label><input id="qdsc" type="number" min="0" step="0.01" value="0" oninput="renderQuoteDraft()"></div><div><label>İşçilik KDV</label><select id="qvat" onchange="renderQuoteDraft()"><option value="20">%20</option><option value="10">%10</option><option value="1">%1</option></select></div></div>
+  <div id="qtot" class="right total" style="margin-top:15px"></div><div class="actions" style="margin-top:15px"><button class="green" onclick="saveQuote(false)">Teklifi Kaydet</button><button onclick="saveQuote(true)">Kaydet + PDF</button><button class="light" onclick="closeModal()">İptal</button></div>`);
+  $('qvat').value=quoteDraft.vat;renderQuoteDraft();
 }
-
-/* =========================
-   ÜRÜNLER
-========================= */
-
-function productModal(id = null) {
-  const p =
-    products.find(x => x.id === id) || {
-      name: '',
-      brand: '',
-      model: '',
-      category: '',
-      purchase_price: 0,
-      sale_price: 0,
-      vat_rate: company.default_vat_rate || 20,
-      stock: 0,
-      description: '',
-      image_url: null
-    };
-
-  editing = id;
-
-  modal(`
-    <h2>${id ? 'Ürün Düzenle' : 'Ürün Ekle'}</h2>
-
-    <div class="grid">
-
-      <div>
-        <label>Ürün Adı</label>
-        <input id="pn" value="${esc(p.name || '')}">
-      </div>
-
-      <div>
-        <label>Marka</label>
-        <input id="pb" value="${esc(p.brand || '')}">
-      </div>
-
-      <div>
-        <label>Model</label>
-        <input id="pm" value="${esc(p.model || '')}">
-      </div>
-
-      <div>
-        <label>Kategori</label>
-        <input id="pc" value="${esc(p.category || '')}">
-      </div>
-
-      <div>
-        <label>Alış Fiyatı</label>
-        <input
-          id="pco"
-          type="number"
-          min="0"
-          step="0.01"
-          value="${p.purchase_price || 0}"
-        >
-      </div>
-
-      <div>
-        <label>Satış Fiyatı</label>
-        <input
-          id="pps"
-          type="number"
-          min="0"
-          step="0.01"
-          value="${p.sale_price || 0}"
-        >
-      </div>
-
-      <div>
-        <label>KDV</label>
-        <select id="pv">
-          <option value="20" ${p.vat_rate == 20 ? 'selected' : ''}>
-            %20
-          </option>
-          <option value="10" ${p.vat_rate == 10 ? 'selected' : ''}>
-            %10
-          </option>
-          <option value="1" ${p.vat_rate == 1 ? 'selected' : ''}>
-            %1
-          </option>
-        </select>
-      </div>
-
-      <div>
-        <label>Stok</label>
-        <input
-          id="pst"
-          type="number"
-          min="0"
-          value="${p.stock || 0}"
-        >
-      </div>
-
-      <div style="grid-column:1/-1">
-        <label>Açıklama</label>
-        <textarea id="pd">${esc(p.description || '')}</textarea>
-      </div>
-
-      <div style="grid-column:1/-1">
-        <label>Gerçek Ürün Görseli</label>
-        <input
-          id="pi"
-          type="file"
-          accept="image/*"
-        >
-      </div>
-
-      ${
-        p.image_url
-          ? `
-            <div style="grid-column:1/-1">
-              <label>Mevcut Görsel</label>
-              <br>
-              <img
-                src="${p.image_url}"
-                style="
-                  width:120px;
-                  height:120px;
-                  object-fit:contain;
-                  border:1px solid #ddd;
-                  border-radius:8px;
-                  padding:5px;
-                "
-              >
-            </div>
-          `
-          : ''
-      }
-
-    </div>
-
-    <div class="actions" style="margin-top:14px">
-      <button class="green" onclick="saveProduct()">
-        Kaydet
-      </button>
-
-      <button class="light" onclick="closeModal()">
-        İptal
-      </button>
-    </div>
-  `);
-}
-
-async function saveProduct() {
-  try {
-    const oldProduct =
-      products.find(x => x.id === editing);
-
-    let image_url =
-      oldProduct?.image_url || null;
-
-    const file =
-      document.getElementById('pi')?.files?.[0];
-
-    if (file) {
-      image_url = await upload(
-        file,
-        user.id +
-        '/products/' +
-        crypto.randomUUID() +
-        '-' +
-        file.name
-      );
-    }
-
-    const o = {
-      name: document.getElementById('pn')?.value.trim() || '',
-      brand: document.getElementById('pb')?.value.trim() || '',
-      model: document.getElementById('pm')?.value.trim() || '',
-      category: document.getElementById('pc')?.value.trim() || '',
-      purchase_price:
-        Number(document.getElementById('pco')?.value) || 0,
-      sale_price:
-        Number(document.getElementById('pps')?.value) || 0,
-      vat_rate:
-        Number(document.getElementById('pv')?.value) || 20,
-      stock:
-        Number(document.getElementById('pst')?.value) || 0,
-      description:
-        document.getElementById('pd')?.value.trim() || '',
-      image_url
-    };
-
-    if (!o.name) {
-      return alert('Ürün adı gerekli.');
-    }
-
-    const r = editing
-      ? await client
-          .from('products')
-          .update(o)
-          .eq('id', editing)
-      : await client
-          .from('products')
-          .insert(o);
-
-    if (r.error) {
-      throw r.error;
-    }
-
-    closeModal();
-    await loadAll();
-
-  } catch (e) {
-    alert(e.message || e);
-  }
-}
-
-function renderProducts() {
-  productRows.innerHTML =
-    products.map(p => `
-      <tr>
-
-        <td>
-          ${
-            p.image_url
-              ? `
-                <img
-                  src="${p.image_url}"
-                  style="
-                    width:60px;
-                    height:60px;
-                    object-fit:contain;
-                    border-radius:6px;
-                  "
-                >
-              `
-              : '-'
-          }
-        </td>
-
-        <td>
-          <b>${esc(p.name || '')}</b>
-          <br>
-          ${esc(p.brand || '')}
-        </td>
-
-        <td>
-          ${esc(p.model || '')}
-        </td>
-
-        <td>
-          ${esc(p.category || '')}
-        </td>
-
-        <td>
-          ${money(p.sale_price)}
-        </td>
-
-        <td>
-          %${p.vat_rate || 0}
-        </td>
-
-        <td>
-          <button onclick="productModal('${p.id}')">
-            Düzenle
-          </button>
-        </td>
-
-      </tr>
-    `).join('') || 'Ürün yok.';
-}
-
-/* =========================
-   TEKLİFLER
-========================= */
-
-function newQuote() {
-  quoteDraft = {
-    items: [],
-    discount: 0,
-    labor: 0,
-    vat: company.default_vat_rate || 20
-  };
-
-  quoteEditor();
-}
-
-function quoteEditor() {
-  modal(`
-    <h2>Yeni Teklif</h2>
-
-    <div class="grid3">
-
-      <div>
-        <label>Müşteri</label>
-
-        <select id="qc">
-          <option value="">Seçin</option>
-
-          ${customers.map(c => `
-            <option value="${c.id}">
-              ${esc(c.company_name || '')}
-            </option>
-          `).join('')}
-
-        </select>
-      </div>
-
-      <div>
-        <label>Teklif No</label>
-
-        <input
-          id="qn"
-          value="TEK-${new Date().getFullYear()}-${String(
-            quotes.length + 1
-          ).padStart(4, '0')}"
-        >
-      </div>
-
-      <div>
-        <label>Tarih</label>
-
-        <input
-          id="qd"
-          type="date"
-          value="${new Date().toISOString().slice(0, 10)}"
-        >
-      </div>
-
-    </div>
-
-    <h3>Ürünler</h3>
-
-    <div class="products">
-
-      ${
-        products.map(p => `
-          <div
-            class="product-card"
-            onclick="addQuoteItem('${p.id}')"
-            style="cursor:pointer"
-          >
-
-            ${
-              p.image_url
-                ? `
-                  <img
-                    src="${p.image_url}"
-                    style="
-                      width:80px;
-                      height:80px;
-                      object-fit:contain;
-                    "
-                  >
-                `
-                : ''
-            }
-
-            <div>
-              <b>${esc(p.name || '')}</b>
-              <br>
-              <span>${esc(p.brand || '')}</span>
-              <br>
-              <span>${esc(p.model || '')}</span>
-              <br>
-              <strong>
-                ${money(p.sale_price)}
-              </strong>
-            </div>
-
-          </div>
-        `).join('')
-      }
-
-    </div>
-
-    <div style="margin-top:15px">
-
-      <table>
-
-        <thead>
-          <tr>
-            <th>Ürün</th>
-            <th>Adet</th>
-            <th>Birim</th>
-            <th>KDV</th>
-            <th>Toplam</th>
-            <th></th>
-          </tr>
-        </thead>
-
-        <tbody id="qitems"></tbody>
-
-      </table>
-
-    </div>
-
-    <div
-      class="grid3"
-      style="margin-top:12px"
-    >
-
-      <div>
-        <label>İşçilik</label>
-
-        <input
-          id="ql"
-          type="number"
-          min="0"
-          step="0.01"
-          value="0"
-          oninput="renderQuoteDraft()"
-        >
-      </div>
-
-      <div>
-        <label>İskonto</label>
-
-        <input
-          id="qdsc"
-          type="number"
-          min="0"
-          step="0.01"
-          value="0"
-          oninput="renderQuoteDraft()"
-        >
-      </div>
-
-      <div>
-        <label>KDV</label>
-
-        <select
-          id="qvat"
-          onchange="renderQuoteDraft()"
-        >
-          <option value="20">%20</option>
-          <option value="10">%10</option>
-          <option value="1">%1</option>
-        </select>
-      </div>
-
-    </div>
-
-    <div
-      id="qtot"
-      class="right total"
-      style="margin-top:15px"
-    ></div>
-
-    <div
-      class="actions"
-      style="margin-top:15px"
-    >
-
-      <button
-        class="green"
-        onclick="saveQuote()"
-      >
-        Teklifi Kaydet
-      </button>
-
-      <button
-        onclick="saveQuote(true)"
-      >
-        Kaydet + PDF
-      </button>
-
-      <button
-        class="light"
-        onclick="closeModal()"
-      >
-        İptal
-      </button>
-
-    </div>
-  `);
-
-  document.getElementById('qvat').value =
-    quoteDraft.vat;
-
+function addQuoteItem(id){
+  const p=products.find(x=>x.id===id);if(!p)return alert('Ürün bulunamadı.');
+  const existing=quoteDraft.items.find(x=>x.product_id===id);
+  if(existing)existing.quantity++;else quoteDraft.items.push({product_id:id,product_name:p.name||'',product_model:p.model||'',description:p.description||'',image_url:p.image_url||null,quantity:1,unit_price:num(p.sale_price),vat_rate:num(p.vat_rate)||20});
   renderQuoteDraft();
 }
-
-function addQuoteItem(id) {
-  const p =
-    products.find(x => x.id === id);
-
-  if (!p) {
-    return alert('Ürün bulunamadı.');
+function quoteTotals(){
+  const subtotal=quoteDraft.items.reduce((s,i)=>s+num(i.quantity)*num(i.unit_price),0);
+  const labor=Math.max(0,num($('ql')?.value));const discount=Math.min(Math.max(0,num($('qdsc')?.value)),subtotal+labor);
+  const grossBase=subtotal+labor;let vat=0;
+  if(grossBase>0){
+    const goodsVat=quoteDraft.items.reduce((s,i)=>s+num(i.quantity)*num(i.unit_price)*(num(i.vat_rate)||20)/100,0);
+    const laborVat=labor*(num($('qvat')?.value)||20)/100;
+    const grossVat=goodsVat+laborVat;
+    vat=Math.max(0,grossVat*(1-discount/grossBase));
   }
-
-  const existing =
-    quoteDraft.items.find(
-      x => x.product_id === id
-    );
-
-  if (existing) {
-    existing.quantity++;
-  } else {
-    quoteDraft.items.push({
-      product_id: id,
-      product_name: p.name || '',
-      product_model: p.model || '',
-      description: p.description || '',
-      image_url: p.image_url || null,
-      quantity: 1,
-      unit_price: Number(p.sale_price) || 0,
-      vat_rate: Number(p.vat_rate) || 20
-    });
-  }
-
-  renderQuoteDraft();
+  return {subtotal,labor,discount,base:Math.max(0,grossBase-discount),vat,total:Math.max(0,grossBase-discount)+vat};
+}
+function renderQuoteDraft(){
+  const el=$('qitems');if(!el)return;
+  el.innerHTML=quoteDraft.items.map((item,n)=>{const q=Math.max(1,Math.floor(num(item.quantity)));const u=Math.max(0,num(item.unit_price));const t=q*u;
+    return `<tr><td><b>${esc(item.product_name)}</b><br><span class="muted">${esc(item.product_model)}</span></td>
+    <td><input style="width:70px" type="number" min="1" step="1" value="${q}" onchange="quoteDraft.items[${n}].quantity=Math.max(1,Math.floor(Number(this.value)||1));renderQuoteDraft()"></td>
+    <td><input style="width:110px" type="number" min="0" step="0.01" value="${u}" onchange="quoteDraft.items[${n}].unit_price=Math.max(0,Number(this.value)||0);renderQuoteDraft()"></td>
+    <td><select onchange="quoteDraft.items[${n}].vat_rate=Number(this.value);renderQuoteDraft()"><option value="20" ${num(item.vat_rate)===20?'selected':''}>%20</option><option value="10" ${num(item.vat_rate)===10?'selected':''}>%10</option><option value="1" ${num(item.vat_rate)===1?'selected':''}>%1</option></select></td>
+    <td>${money(t)}</td><td><button class="red" onclick="quoteDraft.items.splice(${n},1);renderQuoteDraft()">X</button></td></tr>`}).join('')||'<tr><td colspan="6">Ürün seçin.</td></tr>';
+  const t=quoteTotals();$('qtot').innerHTML=`Ara Toplam: ${money(t.subtotal)} | İşçilik: ${money(t.labor)} | İskonto: -${money(t.discount)} | KDV: ${money(t.vat)}<br><strong>GENEL TOPLAM: ${money(t.total)}</strong>`;
+}
+async function saveQuote(pdf=false){
+  const customerId=$('qc')?.value;if(!customerId||!quoteDraft.items.length)return alert('Müşteri ve en az bir ürün gerekli.');
+  const t=quoteTotals();const quote={customer_id:customerId,quote_number:$('qn')?.value.trim()||'',quote_date:$('qd')?.value||today(),status:'Teklif Verildi',subtotal:t.subtotal,discount:t.discount,labor_total:t.labor,vat_rate:num($('qvat')?.value)||20,vat_total:t.vat,grand_total:t.total};
+  if(!quote.quote_number)return alert('Teklif numarası gerekli.');
+  const items=quoteDraft.items.map(i=>({product_id:i.product_id,product_name:i.product_name,product_model:i.product_model,description:i.description,image_url:i.image_url,quantity:Math.max(1,Math.floor(num(i.quantity))),unit_price:Math.max(0,num(i.unit_price)),vat_rate:num(i.vat_rate)||20,line_total:Math.max(0,num(i.quantity))*Math.max(0,num(i.unit_price))}));
+  const r=await client.rpc('create_quote_with_items',{p_quote:quote,p_items:items});
+  if(r.error)return alert(r.error.message);
+  closeModal();await loadAll();toast('Teklif kaydedildi.');if(pdf)await openQuote(r.data);
 }
 
-function renderQuoteDraft() {
-  const qitemsEl =
-    document.getElementById('qitems');
-
-  if (!qitemsEl) {
-    return;
-  }
-
-  let sub = 0;
-
-  qitemsEl.innerHTML =
-    quoteDraft.items.map((item, n) => {
-
-      const quantity =
-        Number(item.quantity) || 1;
-
-      const unitPrice =
-        Number(item.unit_price) || 0;
-
-      const total =
-        quantity * unitPrice;
-
-      sub += total;
-
-      return `
-        <tr>
-
-          <td>
-            <b>
-              ${esc(item.product_name || '')}
-            </b>
-
-            <br>
-
-            <span class="muted">
-              ${esc(item.product_model || '')}
-            </span>
-          </td>
-
-          <td>
-
-            <input
-              style="width:70px"
-              type="number"
-              min="1"
-              value="${quantity}"
-              onchange="
-                quoteDraft.items[${n}].quantity =
-                Number(this.value) || 1;
-                renderQuoteDraft();
-              "
-            >
-
-          </td>
-
-          <td>
-
-            <input
-              style="width:110px"
-              type="number"
-              min="0"
-              step="0.01"
-              value="${unitPrice}"
-              onchange="
-                quoteDraft.items[${n}].unit_price =
-                Number(this.value) || 0;
-                renderQuoteDraft();
-              "
-            >
-
-          </td>
-
-          <td>
-
-            <select
-              onchange="
-                quoteDraft.items[${n}].vat_rate =
-                Number(this.value);
-                renderQuoteDraft();
-              "
-            >
-
-              <option
-                value="20"
-                ${item.vat_rate == 20 ? 'selected' : ''}
-              >
-                %20
-              </option>
-
-              <option
-                value="10"
-                ${item.vat_rate == 10 ? 'selected' : ''}
-              >
-                %10
-              </option>
-
-              <option
-                value="1"
-                ${item.vat_rate == 1 ? 'selected' : ''}
-              >
-                %1
-              </option>
-
-            </select>
-
-          </td>
-
-          <td>
-            ${money(total)}
-          </td>
-
-          <td>
-
-            <button
-              class="red"
-              onclick="
-                quoteDraft.items.splice(${n}, 1);
-                renderQuoteDraft();
-              "
-            >
-              X
-            </button>
-
-          </td>
-
-        </tr>
-      `;
-
-    }).join('') ||
-    `
-      <tr>
-        <td colspan="6">
-          Ürün seçin.
-        </td>
-      </tr>
-    `;
-
-  const labor =
-    Number(
-      document.getElementById('ql')?.value
-    ) || 0;
-
-  const discount =
-    Number(
-      document.getElementById('qdsc')?.value
-    ) || 0;
-
-  const vatRate =
-    Number(
-      document.getElementById('qvat')?.value
-    ) || 20;
-
-  const base =
-    Math.max(
-      0,
-      sub + labor - discount
-    );
-
-  const vat =
-    base * vatRate / 100;
-
-  const total =
-    base + vat;
-
-  const qtotEl =
-    document.getElementById('qtot');
-
-  if (qtotEl) {
-    qtotEl.innerHTML = `
-      Ara Toplam: ${money(sub)}
-      |
-      İşçilik: ${money(labor)}
-      |
-      İskonto: -${money(discount)}
-      |
-      KDV: ${money(vat)}
-
-      <br>
-
-      <strong>
-        GENEL TOPLAM: ${money(total)}
-      </strong>
-    `;
-  }
-}
-
-async function saveQuote(pdf = false) {
-  const customerId =
-    document.getElementById('qc')?.value;
-
-  if (
-    !customerId ||
-    !quoteDraft.items.length
-  ) {
-    return alert(
-      'Müşteri ve en az bir ürün gerekli.'
-    );
-  }
-
-  const subtotal =
-    quoteDraft.items.reduce(
-      (sum, item) =>
-        sum +
-        (Number(item.quantity) || 0) *
-        (Number(item.unit_price) || 0),
-      0
-    );
-
-  const labor =
-    Number(
-      document.getElementById('ql')?.value
-    ) || 0;
-
-  const discount =
-    Number(
-      document.getElementById('qdsc')?.value
-    ) || 0;
-
-  const vatRate =
-    Number(
-      document.getElementById('qvat')?.value
-    ) || 20;
-
-  const base =
-    Math.max(
-      0,
-      subtotal + labor - discount
-    );
-
-  const vat =
-    base * vatRate / 100;
-
-  const total =
-    base + vat;
-
-  const q = {
-    customer_id: customerId,
-
-    quote_number:
-      document.getElementById('qn')?.value.trim() || '',
-
-    quote_date:
-      document.getElementById('qd')?.value || '',
-
-    status:
-      'Teklif Verildi',
-
-    subtotal,
-
-    discount,
-
-    labor_total: labor,
-
-    vat_rate: vatRate,
-
-    vat_total: vat,
-
-    grand_total: total
-  };
-
-  const r =
-    await client
-      .from('quotes')
-      .insert(q)
-      .select()
-      .single();
-
-  if (r.error) {
-    return alert(r.error.message);
-  }
-
-  const items =
-    quoteDraft.items.map(item => ({
-      quote_id: r.data.id,
-      product_id: item.product_id,
-      product_name: item.product_name,
-      product_model: item.product_model,
-      description: item.description,
-      image_url: item.image_url,
-      quantity: Number(item.quantity) || 1,
-      unit_price: Number(item.unit_price) || 0,
-      vat_rate: Number(item.vat_rate) || 20,
-      line_total:
-        (Number(item.quantity) || 0) *
-        (Number(item.unit_price) || 0)
-    }));
-
-  const ir =
-    await client
-      .from('quote_items')
-      .insert(items);
-
-  if (ir.error) {
-    return alert(ir.error.message);
-  }
-
-  closeModal();
-
-  await loadAll();
-
-  if (pdf) {
-    openQuote(r.data.id);
-  }
-}
-
-/* =========================
-   TEKLİF GÖRÜNTÜLEME / PDF
-========================= */
-
-async function openQuote(id) {
-  let q =
-    quotes.find(x => x.id === id);
-
-  if (!q) {
-    const r =
-      await client
-        .from('quotes')
-        .select(`
-          *,
-          customers(
-            company_name,
-            contact_person,
-            phone,
-            address
-          )
-        `)
-        .eq('id', id)
-        .single();
-
-    if (r.error) {
-      return alert(r.error.message);
-    }
-
-    q = r.data;
-  }
-
-  const ir =
-    await client
-      .from('quote_items')
-      .select('*')
-      .eq('quote_id', id);
-
-  if (ir.error) {
-    return alert(ir.error.message);
-  }
-
-  const c =
-    q.customers ||
-    customers.find(
-      x => x.id === q.customer_id
-    ) ||
-    {};
-
-  quotePrint.innerHTML = `
-
-    <div class="qhead">
-
-      <div>
-
-        ${
-          company.logo_url
-            ? `
-              <img
-                class="qlogo"
-                src="${company.logo_url}"
-                alt="Logo"
-              >
-            `
-            : ''
-        }
-
-        <h2>
-          ${esc(
-            company.company_name ||
-            'Türkoğlu Elektrik Elektronik'
-          )}
-        </h2>
-
-        <div>
-          CCTV & Güvenlik Sistemleri
-        </div>
-
-        <div class="muted">
-
-          ${esc(company.phone || '')}
-
-          ${
-            company.email
-              ? ' | ' + esc(company.email)
-              : ''
-          }
-
-          <br>
-
-          ${esc(company.address || '')}
-
-        </div>
-
-      </div>
-
-      <div class="right">
-
-        <b>FİYAT TEKLİFİ</b>
-
-        <br>
-
-        No:
-        ${esc(q.quote_number || '')}
-
-        <br>
-
-        Tarih:
-        ${esc(q.quote_date || '')}
-
-      </div>
-
-    </div>
-
-    <div style="margin:20px 0">
-
-      <b>Müşteri:</b>
-      ${esc(c.company_name || '')}
-
-      <br>
-
-      ${esc(c.contact_person || '')}
-
-      ${
-        c.phone
-          ? ' | ' + esc(c.phone)
-          : ''
-      }
-
-      <br>
-
-      ${esc(c.address || '')}
-
-    </div>
-
-    <table>
-
-      <thead>
-
-        <tr>
-          <th>Görsel</th>
-          <th>Ürün / Model</th>
-          <th>Açıklama</th>
-          <th>Adet</th>
-          <th>Birim</th>
-          <th>Toplam</th>
-        </tr>
-
-      </thead>
-
-      <tbody>
-
-        ${
-          (ir.data || []).map(item => `
-            <tr>
-
-              <td>
-                ${
-                  item.image_url
-                    ? `
-                      <img
-                        class="thumb"
-                        src="${item.image_url}"
-                        alt=""
-                      >
-                    `
-                    : '-'
-                }
-              </td>
-
-              <td>
-                <b>
-                  ${esc(item.product_name || '')}
-                </b>
-
-                <br>
-
-                ${esc(item.product_model || '')}
-              </td>
-
-              <td>
-                ${esc(item.description || '')}
-              </td>
-
-              <td>
-                ${item.quantity}
-              </td>
-
-              <td>
-                ${money(item.unit_price)}
-              </td>
-
-              <td>
-                ${money(item.line_total)}
-              </td>
-
-            </tr>
-          `).join('')
-        }
-
-      </tbody>
-
-    </table>
-
-    <div
-      class="right"
-      style="margin-top:20px"
-    >
-
-      Ara Toplam:
-      ${money(q.subtotal)}
-
-      <br>
-
-      İşçilik:
-      ${money(q.labor_total)}
-
-      <br>
-
-      İskonto:
-      -${money(q.discount)}
-
-      <br>
-
-      KDV:
-      ${money(q.vat_total)}
-
-      <div class="total">
-
-        GENEL TOPLAM:
-        ${money(q.grand_total)}
-
-      </div>
-
-    </div>
-
-    ${
-      company.bank_name ||
-      company.iban
-        ? `
-          <div
-            style="
-              margin-top:25px;
-              padding:12px;
-              border:1px solid #ddd;
-              border-radius:8px;
-            "
-          >
-
-            <b>Banka Bilgileri</b>
-
-            <br>
-
-            ${esc(company.bank_name || '')}
-
-            <br>
-
-            ${esc(
-              company.bank_account_name || ''
-            )}
-
-            <br>
-
-            ${
-              company.iban
-                ? 'IBAN: ' +
-                  esc(company.iban)
-                : ''
-            }
-
-          </div>
-        `
-        : ''
-    }
-
-    <div
-      style="
-        margin-top:35px;
-        border-top:1px solid #ddd;
-        padding-top:12px;
-        font-size:12px;
-      "
-    >
-
-      ${esc(
-        company.quote_footer ||
-        'Fiyat teklifidir.'
-      )}
-
-    </div>
-  `;
-
+async function openQuote(id,autoPrint=false){
+  let q=quotes.find(x=>x.id===id);
+  if(!q){const r=await client.from('quotes').select('*,customers(company_name,contact_person,phone,address,email)').eq('id',id).single();if(r.error)return alert(r.error.message);q=r.data}
+  const ir=await client.from('quote_items').select('*').eq('quote_id',id).order('created_at');
+  if(ir.error)return alert(ir.error.message);
+  const c=q.customers||customers.find(x=>x.id===q.customer_id)||{};
+  $('quotePrint').innerHTML=`<div class="qhead"><div>${company.logo_url?`<img class="qlogo" src="${esc(company.logo_url)}" alt="Logo">`:''}<h2>${esc(company.company_name||'Türkoğlu Elektrik Elektronik')}</h2><div>CCTV & Güvenlik Sistemleri</div><div class="muted">${esc(company.phone)}${company.email?' | '+esc(company.email):''}<br>${esc(company.address)}</div></div><div class="right"><b>FİYAT TEKLİFİ</b><br>No: ${esc(q.quote_number)}<br>Tarih: ${esc(q.quote_date)}</div></div>
+  <div style="margin:20px 0"><b>Müşteri:</b> ${esc(c.company_name)}<br>${esc(c.contact_person)}${c.phone?' | '+esc(c.phone):''}<br>${esc(c.address)}</div>
+  <table><thead><tr><th>Görsel</th><th>Ürün / Model</th><th>Açıklama</th><th>Adet</th><th>Birim</th><th>KDV</th><th>Toplam</th></tr></thead><tbody>${(ir.data||[]).map(i=>`<tr><td>${i.image_url?`<img class="thumb" src="${esc(i.image_url)}" alt="">`:'-'}</td><td><b>${esc(i.product_name)}</b><br>${esc(i.product_model)}</td><td>${esc(i.description)}</td><td>${num(i.quantity)}</td><td>${money(i.unit_price)}</td><td>%${num(i.vat_rate)}</td><td>${money(i.line_total)}</td></tr>`).join('')}</tbody></table>
+  <div class="right" style="margin-top:20px">Ara Toplam: ${money(q.subtotal)}<br>İşçilik: ${money(q.labor_total)}<br>İskonto: -${money(q.discount)}<br>KDV: ${money(q.vat_total)}<div class="total">GENEL TOPLAM: ${money(q.grand_total)}</div></div>
+  ${(company.bank_name||company.iban)?`<div style="margin-top:25px;padding:12px;border:1px solid #ddd;border-radius:8px"><b>Banka Bilgileri</b><br>${esc(company.bank_name)}<br>${esc(company.bank_account_name)}<br>${company.iban?'IBAN: '+esc(company.iban):''}</div>`:''}
+  <div style="margin-top:35px;border-top:1px solid #ddd;padding-top:12px;font-size:12px">${esc(company.quote_footer||'Fiyat teklifidir.')}</div>`;
   page('printPage');
+  if(autoPrint)setTimeout(()=>window.print(),250);
+}
+async function deleteQuote(id){
+  const q=quotes.find(x=>x.id===id);
+  if(!q)return;
+  if(!confirm(`"${q.quote_number||'Bu teklif'}" kaydını silmek istediğinize emin misiniz? Teklif kalemleri de silinecektir.`))return;
+  const r=await client.from('quotes').delete().eq('id',id);
+  if(r.error)return alert(err(r.error));
+  await loadAll();toast('Teklif silindi.');
+}
+function renderQuotes(){
+  $('quoteRows').innerHTML=quotes.map(q=>`<tr><td>${esc(q.quote_number)}</td><td>${esc(q.quote_date)}</td><td>${esc(q.customers?.company_name)}</td><td>${esc(q.status)}</td><td>${money(q.grand_total)}</td><td><div class="rowactions"><button onclick="openQuote('${q.id}',false)">Aç</button><button onclick="openQuote('${q.id}',true)">PDF</button><button class="red" onclick="deleteQuote('${q.id}')">Sil</button></div></td></tr>`).join('')||'<tr><td colspan="6">Teklif yok.</td></tr>';
 }
 
-function renderQuotes() {
-  quoteRows.innerHTML =
-    quotes.map(q => `
-      <tr>
-
-        <td>
-          ${esc(q.quote_number || '')}
-        </td>
-
-        <td>
-          ${esc(q.quote_date || '')}
-        </td>
-
-        <td>
-          ${esc(
-            q.customers?.company_name || ''
-          )}
-        </td>
-
-        <td>
-          ${esc(q.status || '')}
-        </td>
-
-        <td>
-          ${money(q.grand_total)}
-        </td>
-
-        <td>
-          <button
-            onclick="openQuote('${q.id}')"
-          >
-            Aç / PDF
-          </button>
-        </td>
-
-      </tr>
-    `).join('') || 'Teklif yok.';
+function jobModal(id=null){
+  const j=jobs.find(x=>x.id===id)||{status:'Yeni',total_amount:0,paid_amount:0,remaining_amount:0};editing=id;
+  const statuses=['Yeni','Teklif Verildi','Onay Bekliyor','Onaylandı','Malzeme Bekleniyor','Montaj Bekliyor','Montaj Yapılıyor','Tamamlandı','İptal'];
+  modal(`<h2>${id?'İş Düzenle':'Yeni İş'}</h2><div class="grid">
+  <div><label>Müşteri</label><select id="jc"><option value="">Seçin</option>${customers.map(c=>`<option value="${c.id}" ${j.customer_id===c.id?'selected':''}>${esc(c.company_name)}</option>`).join('')}</select></div>
+  <div><label>İş / Proje</label><input id="jt" value="${esc(j.job_title)}"></div>
+  <div><label>Durum</label><select id="js">${statuses.map(s=>`<option value="${esc(s)}" ${s===j.status?'selected':''}>${esc(s)}</option>`).join('')}</select></div>
+  <div><label>Başlangıç</label><input id="jstart" type="date" value="${esc(j.start_date||'')}"></div><div><label>Planlanan Montaj</label><input id="ji" type="date" value="${esc(j.planned_installation_date||'')}"></div><div><label>Tamamlanma</label><input id="jf" type="date" value="${esc(j.completion_date||'')}"></div>
+  <div><label>İş Tutarı</label><input id="jtotal" type="number" min="0" step="0.01" value="${num(j.total_amount)}"></div><div><label>Alınan</label><input id="jpaid" type="number" min="0" step="0.01" value="${num(j.paid_amount)}"></div>
+  <div style="grid-column:1/-1"><label>Adres</label><input id="ja" value="${esc(j.address)}"></div><div style="grid-column:1/-1"><label>Not</label><textarea id="jnote">${esc(j.notes)}</textarea></div></div>
+  <div class="actions" style="margin-top:14px"><button class="green" onclick="saveJob()">Kaydet</button><button class="light" onclick="closeModal()">İptal</button></div>`);
+}
+async function saveJob(){
+  const total=Math.max(0,num($('jtotal')?.value)),paid=Math.min(Math.max(0,num($('jpaid')?.value)),total);
+  const o={customer_id:$('jc')?.value||'',job_title:$('jt')?.value.trim()||'',status:$('js')?.value||'Yeni',start_date:$('jstart')?.value||null,planned_installation_date:$('ji')?.value||null,completion_date:$('jf')?.value||null,address:$('ja')?.value.trim()||'',total_amount:total,paid_amount:paid,remaining_amount:Math.max(0,total-paid),notes:$('jnote')?.value.trim()||''};
+  if(!o.customer_id||!o.job_title)return alert('Müşteri ve iş adı gerekli.');
+  const r=editing?await client.from('jobs').update(o).eq('id',editing):await client.from('jobs').insert(o);
+  if(r.error)return alert(r.error.message);closeModal();await loadAll();toast('İş kaydedildi.');
+}
+async function deleteJob(id){
+  const j=jobs.find(x=>x.id===id);
+  if(!j)return;
+  if(!confirm(`"${j.job_title||'Bu iş'}" kaydını silmek istediğinize emin misiniz? Bu işe bağlı ödeme kayıtları korunur ancak iş bağlantıları kaldırılır.`))return;
+  const r=await client.from('jobs').delete().eq('id',id);
+  if(r.error)return alert(err(r.error));
+  await loadAll();toast('İş silindi.');
+}
+function renderJobs(){
+  $('jobRows').innerHTML=jobs.map(j=>`<tr><td>${esc(j.customers?.company_name)}</td><td>${esc(j.job_title)}</td><td>${esc(j.status)}</td><td>${esc(j.planned_installation_date||'-')}</td><td>${money(j.remaining_amount)}</td><td><div class="rowactions"><button onclick="jobModal('${j.id}')">Düzenle</button><button class="red" onclick="deleteJob('${j.id}')">Sil</button></div></td></tr>`).join('')||'<tr><td colspan="6">İş yok.</td></tr>';
 }
 
-/* =========================
-   İŞLER
-========================= */
-
-function jobModal(id = null) {
-  const j =
-    jobs.find(x => x.id === id) || {
-      status: 'Yeni'
-    };
-
-  editing = id;
-
-  const statuses = [
-    'Yeni',
-    'Teklif Verildi',
-    'Onay Bekliyor',
-    'Onaylandı',
-    'Malzeme Bekleniyor',
-    'Montaj Bekliyor',
-    'Montaj Yapılıyor',
-    'Tamamlandı',
-    'İptal'
-  ];
-
-  modal(`
-    <h2>
-      ${id ? 'İş Düzenle' : 'Yeni İş'}
-    </h2>
-
-    <div class="grid">
-
-      <div>
-
-        <label>Müşteri</label>
-
-        <select id="jc">
-
-          <option value="">
-            Seçin
-          </option>
-
-          ${customers.map(c => `
-            <option
-              value="${c.id}"
-              ${j.customer_id === c.id ? 'selected' : ''}
-            >
-              ${esc(c.company_name || '')}
-            </option>
-          `).join('')}
-
-        </select>
-
-      </div>
-
-      <div>
-
-        <label>İş / Proje</label>
-
-        <input
-          id="jt"
-          value="${esc(j.job_title || '')}"
-        >
-
-      </div>
-
-      <div>
-
-        <label>Durum</label>
-
-        <select id="js">
-
-          ${statuses.map(status => `
-            <option
-              value="${esc(status)}"
-              ${status === j.status ? 'selected' : ''}
-            >
-              ${esc(status)}
-            </option>
-          `).join('')}
-
-        </select>
-
-      </div>
-
-      <div>
-
-        <label>Başlangıç</label>
-
-        <input
-          id="jstart"
-          type="date"
-          value="${j.start_date || ''}"
-        >
-
-      </div>
-
-      <div>
-
-        <label>Planlanan Montaj</label>
-
-        <input
-          id="ji"
-          type="date"
-          value="${j.planned_installation_date || ''}"
-        >
-
-      </div>
-
-      <div>
-
-        <label>Tamamlanma</label>
-
-        <input
-          id="jf"
-          type="date"
-          value="${j.completion_date || ''}"
-        >
-
-      </div>
-
-      <div>
-
-        <label>İş Tutarı</label>
-
-        <input
-          id="jtotal"
-          type="number"
-          min="0"
-          step="0.01"
-          value="${j.total_amount || 0}"
-        >
-
-      </div>
-
-      <div>
-
-        <label>Alınan</label>
-
-        <input
-          id="jpaid"
-          type="number"
-          min="0"
-          step="0.01"
-          value="${j.paid_amount || 0}"
-        >
-
-      </div>
-
-      <div style="grid-column:1/-1">
-
-        <label>Adres</label>
-
-        <input
-          id="ja"
-          value="${esc(j.address || '')}"
-        >
-
-      </div>
-
-      <div style="grid-column:1/-1">
-
-        <label>Not</label>
-
-        <textarea id="jnote">${esc(
-          j.notes || ''
-        )}</textarea>
-
-      </div>
-
-    </div>
-
-    <div
-      class="actions"
-      style="margin-top:14px"
-    >
-
-      <button
-        class="green"
-        onclick="saveJob()"
-      >
-        Kaydet
-      </button>
-
-      <button
-        class="light"
-        onclick="closeModal()"
-      >
-        İptal
-      </button>
-
-    </div>
-  `);
+function paymentModal(){
+  modal(`<h2>Ödeme Ekle</h2><div class="grid"><div><label>Müşteri</label><select id="pcu" onchange="filterPaymentJobs()"><option value="">Seçin</option>${customers.map(c=>`<option value="${c.id}">${esc(c.company_name)}</option>`).join('')}</select></div><div><label>İş / Proje</label><select id="pjob"><option value="">Önce müşteri seçin</option></select></div><div><label>Tutar</label><input id="pa" type="number" min="0.01" step="0.01"></div><div><label>Tarih</label><input id="pdte" type="date" value="${today()}"></div><div><label>Yöntem</label><select id="pmethod"><option>Nakit</option><option>Havale/EFT</option><option>Kart</option><option>Diğer</option></select></div><div style="grid-column:1/-1"><label>Açıklama</label><input id="pdesc"></div></div><div class="actions" style="margin-top:14px"><button class="green" onclick="savePayment()">Kaydet</button><button class="light" onclick="closeModal()">İptal</button></div>`);
+}
+function filterPaymentJobs(){
+  const customerId=$('pcu')?.value,select=$('pjob');if(!select)return;
+  if(!customerId){select.innerHTML='<option value="">Önce müşteri seçin</option>';return}
+  const customerJobs=jobs.filter(j=>j.customer_id===customerId&&num(j.remaining_amount)>0);
+  select.innerHTML='<option value="">İş seçin</option>'+customerJobs.map(j=>`<option value="${j.id}">${esc(j.job_title)} - Kalan: ${money(j.remaining_amount)}</option>`).join('');
+}
+async function savePayment(){
+  const customerId=$('pcu')?.value,jobId=$('pjob')?.value||null,amount=Math.max(0,num($('pa')?.value));
+  if(!customerId||amount<=0)return alert('Müşteri ve 0’dan büyük tutar gerekli.');
+  const r=await client.rpc('record_payment',{p_customer_id:customerId,p_job_id:jobId,p_amount:amount,p_payment_date:$('pdte')?.value||today(),p_payment_method:$('pmethod')?.value||'',p_description:$('pdesc')?.value.trim()||''});
+  if(r.error)return alert(r.error.message);
+  closeModal();await loadAll();toast('Ödeme başarıyla kaydedildi.');
+}
+async function deletePayment(id){
+  const p=payments.find(x=>x.id===id);
+  if(!p)return;
+  if(!confirm(`${money(p.amount)} tutarındaki ödeme kaydını silmek istediğinize emin misiniz? Bağlı işin bakiyesi otomatik yeniden hesaplanacaktır.`))return;
+  const r=await client.rpc('delete_payment',{p_payment_id:id});
+  if(r.error)return alert(err(r.error));
+  await loadAll();toast('Ödeme silindi.');
+}
+function renderPayments(){
+  $('paymentRows').innerHTML=payments.map(p=>`<tr><td>${esc(p.payment_date)}</td><td>${esc(p.customers?.company_name)}</td><td>${money(p.amount)}</td><td>${esc(p.payment_method)}</td><td>${esc(p.description)}</td><td><button class="red" onclick="deletePayment('${p.id}')">Sil</button></td></tr>`).join('')||'<tr><td colspan="6">Ödeme yok.</td></tr>';
 }
 
-async function saveJob() {
-  const total =
-    Number(
-      document.getElementById('jtotal')?.value
-    ) || 0;
-
-  const paid =
-    Number(
-      document.getElementById('jpaid')?.value
-    ) || 0;
-
-  const o = {
-    customer_id:
-      document.getElementById('jc')?.value || '',
-
-    job_title:
-      document.getElementById('jt')?.value.trim() || '',
-
-    status:
-      document.getElementById('js')?.value || 'Yeni',
-
-    start_date:
-      document.getElementById('jstart')?.value || null,
-
-    planned_installation_date:
-      document.getElementById('ji')?.value || null,
-
-    completion_date:
-      document.getElementById('jf')?.value || null,
-
-    address:
-      document.getElementById('ja')?.value.trim() || '',
-
-    total_amount: total,
-
-    paid_amount: paid,
-
-    remaining_amount:
-      Math.max(0, total - paid),
-
-    notes:
-      document.getElementById('jnote')?.value.trim() || ''
-  };
-
-  if (!o.customer_id || !o.job_title) {
-    return alert(
-      'Müşteri ve iş adı gerekli.'
-    );
-  }
-
-  const r = editing
-    ? await client
-        .from('jobs')
-        .update(o)
-        .eq('id', editing)
-    : await client
-        .from('jobs')
-        .insert(o);
-
-  if (r.error) {
-    return alert(r.error.message);
-  }
-
-  closeModal();
-
-  await loadAll();
+function loadSettingsUI(){
+  if(!$('sName'))return;
+  $('sName').value=company.company_name||'Türkoğlu Elektrik Elektronik';$('sPhone').value=company.phone||'';$('sWhatsapp').value=company.whatsapp||'';$('sEmail').value=company.email||'';$('sWeb').value=company.website||'';$('sTax').value=company.tax_number||'';$('sOffice').value=company.tax_office||'';$('sVat').value=company.default_vat_rate||20;$('sAddress').value=company.address||'';$('sNote').value=company.quote_footer||'';$('sBank').value=company.bank_name||'';$('sIban').value=company.iban||'';$('sAccount').value=company.bank_account_name||'';
+  $('logoPrev').innerHTML=company.logo_url?`<img class="qlogo" src="${esc(company.logo_url)}" alt="Logo">`:'';
 }
-
-function renderJobs() {
-  jobRows.innerHTML =
-    jobs.map(j => `
-      <tr>
-
-        <td>
-          ${esc(
-            j.customers?.company_name || ''
-          )}
-        </td>
-
-        <td>
-          ${esc(j.job_title || '')}
-        </td>
-
-        <td>
-          ${esc(j.status || '')}
-        </td>
-
-        <td>
-          ${esc(
-            j.planned_installation_date || '-'
-          )}
-        </td>
-
-        <td>
-          ${money(j.remaining_amount)}
-        </td>
-
-        <td>
-          <button
-            onclick="jobModal('${j.id}')"
-          >
-            Düzenle
-          </button>
-        </td>
-
-      </tr>
-    `).join('') || 'İş yok.';
+$('sLogo')?.addEventListener('change',async e=>{
+  const file=e.target.files?.[0];if(!file||!user)return;
+  try{
+    const url=await upload(file,`${user.id}/company/logo-${crypto.randomUUID()}-${cfgKey(file.name)}`);
+    company.logo_url=url;
+    $('logoPrev').innerHTML=`<img class="preview-img" src="${esc(url)}" alt="Firma logosu">`;
+    toast('Logo yüklendi. Firma ayarlarını kalıcılaştırmak için Kaydet’e basın.');
+  }catch(ex){e.target.value='';alert(err(ex))}
+});
+async function saveSettings(){
+  const o={company_name:$('sName').value.trim(),phone:$('sPhone').value.trim(),whatsapp:$('sWhatsapp').value.trim(),email:$('sEmail').value.trim(),website:$('sWeb').value.trim(),tax_number:$('sTax').value.trim(),tax_office:$('sOffice').value.trim(),default_vat_rate:num($('sVat').value)||20,address:$('sAddress').value.trim(),quote_footer:$('sNote').value.trim(),bank_name:$('sBank').value.trim(),iban:$('sIban').value.trim(),bank_account_name:$('sAccount').value.trim(),logo_url:company.logo_url||null};
+  const r=company.id?await client.from('company_settings').update(o).eq('id',company.id).select().single():await client.from('company_settings').insert(o).select().single();
+  if(r.error)return alert(r.error.message);company=r.data||company;toast('Firma ayarları kaydedildi.');await loadAll();
 }
-
-/* =========================
-   ÖDEMELER
-========================= */
-
-function paymentModal() {
-  modal(`
-    <h2>Ödeme Ekle</h2>
-
-    <div class="grid">
-
-      <div>
-
-        <label>Müşteri</label>
-
-        <select
-          id="pcu"
-          onchange="filterPaymentJobs()"
-        >
-
-          <option value="">
-            Seçin
-          </option>
-
-          ${customers.map(c => `
-            <option value="${c.id}">
-              ${esc(c.company_name || '')}
-            </option>
-          `).join('')}
-
-        </select>
-
-      </div>
-
-      <div>
-
-        <label>İş / Proje</label>
-
-        <select id="pjob">
-
-          <option value="">
-            Önce müşteri seçin
-          </option>
-
-        </select>
-
-      </div>
-
-      <div>
-
-        <label>Tutar</label>
-
-        <input
-          id="pa"
-          type="number"
-          min="0"
-          step="0.01"
-        >
-
-      </div>
-
-      <div>
-
-        <label>Tarih</label>
-
-        <input
-          id="pdte"
-          type="date"
-          value="${new Date().toISOString().slice(0, 10)}"
-        >
-
-      </div>
-
-      <div>
-
-        <label>Yöntem</label>
-
-        <select id="pmethod">
-
-          <option>Nakit</option>
-          <option>Havale/EFT</option>
-          <option>Kart</option>
-          <option>Diğer</option>
-
-        </select>
-
-      </div>
-
-      <div style="grid-column:1/-1">
-
-        <label>Açıklama</label>
-
-        <input id="pdesc">
-
-      </div>
-
-    </div>
-
-    <div
-      class="actions"
-      style="margin-top:14px"
-    >
-
-      <button
-        class="green"
-        onclick="savePayment()"
-      >
-        Kaydet
-      </button>
-
-      <button
-        class="light"
-        onclick="closeModal()"
-      >
-        İptal
-      </button>
-
-    </div>
-  `);
-}
-
-function filterPaymentJobs() {
-  const customerId =
-    document.getElementById('pcu')?.value;
-
-  const select =
-    document.getElementById('pjob');
-
-  if (!select) return;
-
-  if (!customerId) {
-    select.innerHTML =
-      '<option value="">Önce müşteri seçin</option>';
-    return;
-  }
-
-  const customerJobs =
-    jobs.filter(
-      j => j.customer_id === customerId
-    );
-
-  if (!customerJobs.length) {
-    select.innerHTML =
-      '<option value="">Bu müşteriye ait iş yok</option>';
-    return;
-  }
-
-  select.innerHTML = `
-    <option value="">
-      İş seçin
-    </option>
-
-    ${customerJobs.map(j => `
-      <option value="${j.id}">
-        ${esc(j.job_title || '')}
-        - Kalan: ${money(j.remaining_amount)}
-      </option>
-    `).join('')}
-  `;
-}
-
-async function savePayment() {
-  const customerId =
-    document.getElementById('pcu')?.value;
-
-  const jobId =
-    document.getElementById('pjob')?.value;
-
-  const amount =
-    Number(
-      document.getElementById('pa')?.value
-    ) || 0;
-
-  if (!customerId || !amount) {
-    return alert(
-      'Müşteri ve tutar gerekli.'
-    );
-  }
-
-  const payment = {
-    customer_id: customerId,
-
-    job_id:
-      jobId || null,
-
-    amount,
-
-    payment_date:
-      document.getElementById('pdte')?.value || null,
-
-    payment_method:
-      document.getElementById('pmethod')?.value || '',
-
-    description:
-      document.getElementById('pdesc')?.value.trim() || ''
-  };
-
-  const r =
-    await client
-      .from('payments')
-      .insert(payment);
-
-  if (r.error) {
-    return alert(r.error.message);
-  }
-
-  /*
-   * Ödeme bir işe bağlıysa kalan tutarı güncelle.
-   */
-  if (jobId) {
-    const job =
-      jobs.find(j => j.id === jobId);
-
-    if (job) {
-      const newPaid =
-        Number(job.paid_amount || 0) +
-        amount;
-
-      const newRemaining =
-        Math.max(
-          0,
-          Number(job.total_amount || 0) -
-          newPaid
-        );
-
-      await client
-        .from('jobs')
-        .update({
-          paid_amount: newPaid,
-          remaining_amount: newRemaining
-        })
-        .eq('id', jobId);
-    }
-  }
-
-  closeModal();
-
-  await loadAll();
-
-  if (typeof toast === 'function') {
-    toast('Ödeme başarıyla kaydedildi.');
-  }
-}
-
-function renderPayments() {
-  paymentRows.innerHTML =
-    payments.map(p => `
-      <tr>
-
-        <td>
-          ${esc(p.payment_date || '')}
-        </td>
-
-        <td>
-          ${esc(
-            p.customers?.company_name || ''
-          )}
-        </td>
-
-        <td>
-          ${money(p.amount)}
-        </td>
-
-        <td>
-          ${esc(
-            p.payment_method || ''
-          )}
-        </td>
-
-        <td>
-          ${esc(
-            p.description || ''
-          )}
-        </td>
-
-      </tr>
-    `).join('') || 'Ödeme yok.';
-}
-
-/* =========================
-   FİRMA AYARLARI
-========================= */
-
-function loadSettingsUI() {
-  sName.value =
-    company.company_name ||
-    'Türkoğlu Elektrik Elektronik';
-
-  sPhone.value =
-    company.phone || '';
-
-  sWhatsapp.value =
-    company.whatsapp || '';
-
-  sEmail.value =
-    company.email || '';
-
-  sWeb.value =
-    company.website || '';
-
-  sTax.value =
-    company.tax_number || '';
-
-  sOffice.value =
-    company.tax_office || '';
-
-  sVat.value =
-    company.default_vat_rate || 20;
-
-  sAddress.value =
-    company.address || '';
-
-  sNote.value =
-    company.quote_footer || '';
-
-  sBank.value =
-    company.bank_name || '';
-
-  sIban.value =
-    company.iban || '';
-
-  sAccount.value =
-    company.bank_account_name || '';
-
-  logoPrev.innerHTML =
-    company.logo_url
-      ? `
-        <img
-          class="qlogo"
-          src="${company.logo_url}"
-          alt="Logo"
-        >
-      `
-      : '';
-}
-
-if (typeof sLogo !== 'undefined' && sLogo) {
-  sLogo.addEventListener(
-    'change',
-    async e => {
-
-      const file =
-        e.target.files?.[0];
-
-      if (!file) return;
-
-      try {
-        const url =
-          await upload(
-            file,
-            user.id +
-            '/company/logo-' +
-            Date.now() +
-            '-' +
-            file.name
-          );
-
-        company.logo_url = url;
-
-        logoPrev.innerHTML = `
-          <img
-            class="qlogo"
-            src="${url}"
-            alt="Logo"
-          >
-        `;
-
-        toast(
-          'Logo yüklendi; Kaydet ile ayarı tamamlayın.'
-        );
-
-      } catch (error) {
-        alert(
-          error.message || error
-        );
-      }
-    }
-  );
-}
-
-async function saveSettings() {
-  const o = {
-    company_name:
-      sName.value.trim(),
-
-    phone:
-      sPhone.value.trim(),
-
-    whatsapp:
-      sWhatsapp.value.trim(),
-
-    email:
-      sEmail.value.trim(),
-
-    website:
-      sWeb.value.trim(),
-
-    tax_number:
-      sTax.value.trim(),
-
-    tax_office:
-      sOffice.value.trim(),
-
-    default_vat_rate:
-      Number(sVat.value) || 20,
-
-    address:
-      sAddress.value.trim(),
-
-    quote_footer:
-      sNote.value.trim(),
-
-    bank_name:
-      sBank.value.trim(),
-
-    iban:
-      sIban.value.trim(),
-
-    bank_account_name:
-      sAccount.value.trim(),
-
-    logo_url:
-      company.logo_url || null
-  };
-
-  const r =
-    company.id
-      ? await client
-          .from('company_settings')
-          .update(o)
-          .eq('id', company.id)
-          .select()
-          .single()
-      : await client
-          .from('company_settings')
-          .insert(o)
-          .select()
-          .single();
-
-  if (r.error) {
-    return alert(r.error.message);
-  }
-
-  if (r.data) {
-    company = r.data;
-  }
-
-  toast(
-    'Firma ayarları kaydedildi.'
-  );
-
-  await loadAll();
-}
-
 start();
+
 </script>
 </body></html>
