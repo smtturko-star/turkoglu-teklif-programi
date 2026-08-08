@@ -61,3 +61,4 @@ jobs:
           git add index.html
           git diff --cached --quiet || git commit -m "Add professional product search and quote product search"
           git push
+      # trigger-check
