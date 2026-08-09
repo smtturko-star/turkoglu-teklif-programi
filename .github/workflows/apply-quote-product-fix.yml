@@ -1,0 +1,68 @@
+name: Apply Quote Remove And Two Products Fix
+
+on:
+  push:
+    paths:
+      - '.github/workflows/apply-quote-product-fix.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Patch quote fix and seed exactly two products
+        shell: python
+        run: |
+          from pathlib import Path
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+
+          script_tag = '<script src="./quote-fix.js"></script>'
+          if script_tag not in s:
+              marker = '</body>\n</html>'
+              if marker not in s:
+                  raise SystemExit('HTML kapanış hedefi bulunamadı.')
+              s = s.replace(marker, script_tag + '\n' + marker, 1)
+
+          seed_marker = '/* TURKOGLU_TWO_ELECTRICAL_PRODUCTS */'
+          if seed_marker not in s:
+              seed = r'''/* TURKOGLU_TWO_ELECTRICAL_PRODUCTS */
+(function(){
+  const wanted=[
+    {name:'3'lü Grup Priz',brand:'Standart',model:'3LÜ-GRUP-PRİZ',category:'Elektrik Malzemeleri',purchase_price:0,sale_price:0,vat_rate:20,stock:0,description:'3 çıkışlı grup priz'},
+    {name:'Erkek Fiş',brand:'Standart',model:'ERKEK-FİŞ',category:'Elektrik Malzemeleri',purchase_price:0,sale_price:0,vat_rate:20,stock:0,description:'Standart erkek fiş'}
+  ];
+  async function seed(){
+    if(typeof client==='undefined'||typeof user==='undefined'||!client||!user)return false;
+    const {data,error}=await client.from('products').select('name,brand,model');
+    if(error)return false;
+    const keys=new Set((data||[]).map(p=>String((p.brand||'')+'|'+(p.model||'')).toLocaleLowerCase('tr-TR')));
+    const missing=wanted.filter(p=>!keys.has((p.brand+'|'+p.model).toLocaleLowerCase('tr-TR')));
+    if(!missing.length)return true;
+    const r=await client.from('products').insert(missing);
+    if(!r.error && typeof loadAll==='function')await loadAll();
+    return !r.error;
+  }
+  let tries=0;
+  const timer=setInterval(async()=>{tries++;if(await seed()||tries>=30)clearInterval(timer)},2000);
+})();
+'''
+              needle = '</script>\n</body>\n</html>'
+              s = s.replace(needle, seed + '\n' + needle, 1)
+
+          p.write_text(s, encoding='utf-8')
+
+      - name: Commit patch
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          if git diff --cached --quiet; then echo 'Değişiklik yok.'; exit 0; fi
+          git commit -m 'fix: teklif kalemi silme ve iki elektrik urunu'
+          git push
