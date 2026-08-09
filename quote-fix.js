@@ -150,22 +150,26 @@
     });
   }
 
-  /* X butonu: capture aşamasında native olayı iptal etmiyoruz.
-     Inline onclick varsa doğrudan çalıştırıyoruz; yoksa uygulamanın kendi handler'ına bırakıyoruz. */
+  /* Teklif kalemi silme: doğrudan quoteDraft üzerinden kaldırır. */
   function removeFix(){
     const modal=getModal(); if(!modal || modal.dataset.quoteRemoveFix==='1') return;
     modal.dataset.quoteRemoveFix='1';
     modal.addEventListener('click', ev => {
-      const el=ev.target.closest('button,a,[role="button"]'); if(!el) return;
+      const el=ev.target.closest('button,a,[role="button"]');
+      if(!el || !modal.contains(el)) return;
       const label=norm(el.getAttribute('aria-label') || el.getAttribute('title') || el.textContent).replace(/\s+/g,'');
-      if(!(label==='×' || label==='x' || label.includes('sil') || label.includes('kaldır'))) return;
-      const handler=el.onclick;
-      if(typeof handler==='function'){
-        ev.preventDefault();
-        try { handler.call(el, ev); } catch(e) { console.error('Teklif ürün silme:',e); }
-      }
-      setTimeout(moveSelected,120);
-    }, false);
+      if(label!=='×' && label!=='x') return;
+      const row=el.closest('tr');
+      const rows=[...modal.querySelectorAll('#qitems tr')];
+      const index=row ? rows.indexOf(row) : -1;
+      if(index < 0) return;
+      if(!Array.isArray(window.quoteDraft?.items)) return;
+      ev.preventDefault();
+      ev.stopImmediatePropagation();
+      window.quoteDraft.items.splice(index,1);
+      if(typeof window.renderQuoteDraft==='function') window.renderQuoteDraft();
+      setTimeout(moveSelected,0);
+    }, true);
   }
 
   function observeLayout(){
