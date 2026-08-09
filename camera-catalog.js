@@ -1,6 +1,6 @@
-/* Türkoğlu CCTV kamera kataloğu: giriş yapan hesabın products tablosuna eksikleri bir kez ekler. */
+/* Türkoğlu CCTV kamera kataloğu: giriş yapan hesabın products tablosuna eksikleri ekler. */
 (function(){
-  const KEY='turkoglu_camera_catalog_v1';
+  const KEY='turkoglu_camera_catalog_v2';
   const catalog=[];
   const ipBrands=['Avenir','HiLook','Hikvision','Dahua'];
   const hdBrands=['Hikvision','Dahua'];
@@ -19,7 +19,6 @@
   const norm=v=>String(v??'').trim().toLocaleLowerCase('tr-TR');
   const key=p=>[p.name,p.brand,p.model,p.category].map(norm).join('|');
   async function seed(){
-    if(localStorage.getItem(KEY)==='done') return;
     try{
       const cfg=JSON.parse(localStorage.getItem('turkoglu_sb_cfg')||'{}');
       if(!cfg.u||!cfg.k||!window.supabase?.createClient)return;
@@ -35,6 +34,8 @@
         if(ins.error)throw ins.error;
       }
       localStorage.setItem(KEY,'done');
+      if(typeof window.loadAll==='function')await window.loadAll();
+      if(typeof window.renderProducts==='function')window.renderProducts();
       if(typeof window.toast==='function')window.toast(`${missing.length} kamera ürünü kataloğa eklendi.`);
     }catch(e){console.error('Kamera kataloğu eklenemedi:',e)}
   }
