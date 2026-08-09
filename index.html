@@ -1266,6 +1266,79 @@ async function saveSettings(){
   if(modal)new MutationObserver(addQuoteProductBar).observe(modal,{childList:true,subtree:true});
 })();
 
+
+(function(){
+  const configs=[
+    ['customers','customerRows','Müşteri, yetkili, telefon, e-posta veya adres ara...'],
+    ['products','productRows','Ürün adı, marka, model veya kategori ara...'],
+    ['quotes','quoteRows','Teklif no, müşteri veya durum ara...'],
+    ['jobs','jobRows','Müşteri, iş/proje veya durum ara...'],
+    ['payments','paymentRows','Müşteri, tarih, yöntem veya açıklama ara...']
+  ];
+  const norm=v=>String(v??'').toLocaleLowerCase('tr-TR');
+  const state={customers:'',products:'',quotes:'',jobs:'',payments:''};
+
+  function applyRows(key,tbodyId){
+    const body=document.getElementById(tbodyId); if(!body)return;
+    const q=norm(state[key]).trim();
+    let total=0,shown=0;
+    [...body.querySelectorAll('tr')].forEach(tr=>{
+      const cells=tr.children;
+      if(!cells.length)return;
+      const empty=cells.length===1;
+      if(empty){tr.style.display=q?'none':'';return;}
+      total++;
+      const ok=!q || norm(tr.textContent).includes(q);
+      tr.style.display=ok?'':'none';
+      if(ok)shown++;
+    });
+    const c=document.getElementById('search-count-'+key);
+    if(c)c.textContent=q ? shown+' / '+total : 'Toplam '+shown;
+  }
+
+  function addTableBar(sectionId,tbodyId,placeholder,key){
+    const section=document.getElementById(sectionId); if(!section)return;
+    if(section.querySelector('[data-search-key="'+key+'"]'))return;
+    const card=section.querySelector('.card');
+    const table=card?.querySelector('table');
+    if(!table)return;
+    const bar=document.createElement('div');
+    bar.className='global-search';
+    bar.dataset.searchKey=key;
+    bar.innerHTML='<div class="global-search-main"><span class="global-search-icon">🔎</span><input type="search" autocomplete="off" placeholder="'+placeholder+'"></div><span class="global-search-count" id="search-count-'+key+'">Toplam 0</span><button type="button" class="global-search-clear">Temizle</button>';
+    table.parentNode.insertBefore(bar,table);
+    const input=bar.querySelector('input');
+    input.addEventListener('input',()=>{state[key]=input.value;applyRows(key,tbodyId)});
+    bar.querySelector('.global-search-clear').addEventListener('click',()=>{state[key]='';input.value='';applyRows(key,tbodyId);input.focus()});
+    const body=document.getElementById(tbodyId);
+    if(body)new MutationObserver(()=>applyRows(key,tbodyId)).observe(body,{childList:true});
+    applyRows(key,tbodyId);
+  }
+
+  function addQuoteProductBar(){
+    const box=document.querySelector('#modalBox .products');
+    if(!box || box.previousElementSibling?.dataset?.quoteProductSearch==='1')return;
+    const bar=document.createElement('div');
+    bar.className='global-search';
+    bar.dataset.quoteProductSearch='1';
+    bar.innerHTML='<div class="global-search-main"><span class="global-search-icon">🔎</span><input type="search" autocomplete="off" placeholder="Teklif için ürün ara: ad, marka, model veya kategori..."></div><button type="button" class="global-search-clear">Temizle</button>';
+    box.parentNode.insertBefore(bar,box);
+    const input=bar.querySelector('input');
+    const apply=()=>{const q=norm(input.value).trim();box.querySelectorAll('.p').forEach(card=>card.style.display=(!q||norm(card.textContent).includes(q))?'':'none')};
+    input.addEventListener('input',apply);
+    bar.querySelector('.global-search-clear').addEventListener('click',()=>{input.value='';apply();input.focus()});
+  }
+
+  function install(){
+    configs.forEach(c=>addTableBar(c[0],c[1],c[2],c[0]));
+    addQuoteProductBar();
+  }
+
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install);else install();
+  const modal=document.getElementById('modalBox');
+  if(modal)new MutationObserver(addQuoteProductBar).observe(modal,{childList:true,subtree:true});
+})();
+
 start();
 </script>
 </body>
