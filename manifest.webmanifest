@@ -1,0 +1,12 @@
+{
+  "name": "Türkoğlu Elektrik Elektronik — Teklif & İş Takip",
+  "short_name": "Türkoğlu Teklif",
+  "description": "CCTV Teklif & İş Takip Sistemi",
+  "lang": "tr-TR",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#eef3f8",
+  "theme_color": "#10243f",
+  "orientation": "portrait-primary",
+  "icons": []
+}
