@@ -143,6 +143,67 @@
     observer.observe(rows,{childList:true,subtree:true});
   }
 
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',watchProductRows,{once:true});
-  else setTimeout(watchProductRows,50);
+  /* Teklif oluştururken ürün seçimine de aynı filtreleme mantığı. */
+  function initQuoteProductFilters(){
+    const search=document.getElementById('quoteProductSearch');
+    const box=document.getElementById('quoteProducts');
+    if(!search||!box||document.getElementById('quoteProductBrandFilter'))return;
+    const bar=search.parentElement;
+    if(!bar)return;
+    const make=(id,label)=>{
+      const s=document.createElement('select');
+      s.id=id;s.title=label;s.setAttribute('aria-label',label);s.style.maxWidth='170px';
+      s.innerHTML=`<option value="all">${label}</option>`;
+      s.addEventListener('change',applyQuoteProductFilters);
+      return s;
+    };
+    const brand=make('quoteProductBrandFilter','Tüm markalar');
+    const category=make('quoteProductCategoryFilter','Tüm kategoriler');
+    const stock=make('quoteProductStockFilter','Tüm stoklar');
+    const clear=document.createElement('button');
+    clear.type='button';clear.className='light';clear.textContent='Filtreleri Temizle';
+    clear.addEventListener('click',()=>{
+      search.value='';brand.value='all';category.value='all';stock.value='all';applyQuoteProductFilters();
+    });
+    bar.appendChild(brand);bar.appendChild(category);bar.appendChild(stock);bar.appendChild(clear);
+    const source=Array.isArray(window.products)?window.products:(typeof products!=='undefined'?products:[]);
+    const brands=[...new Set(source.map(p=>String(p.brand||'').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'tr'));
+    const cats=[...new Set(source.map(p=>String(p.category||'').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'tr'));
+    brand.innerHTML='<option value="all">Tüm markalar</option>'+brands.map(v=>`<option value="${esc(v)}">${esc(v)}</option>`).join('');
+    category.innerHTML='<option value="all">Tüm kategoriler</option>'+cats.map(v=>`<option value="${esc(v)}">${esc(v)}</option>`).join('');
+    applyQuoteProductFilters();
+  }
+
+  function applyQuoteProductFilters(){
+    const search=norm(document.getElementById('quoteProductSearch')?.value||'');
+    const brand=norm(document.getElementById('quoteProductBrandFilter')?.value||'all');
+    const category=norm(document.getElementById('quoteProductCategoryFilter')?.value||'all');
+    const stock=document.getElementById('quoteProductStockFilter')?.value||'all';
+    const source=Array.isArray(window.products)?window.products:(typeof products!=='undefined'?products:[]);
+    document.querySelectorAll('#quoteProducts .p').forEach(card=>{
+      const id=card.getAttribute('onclick')?.match(/addQuoteItem\(['"]([^'"]+)/)?.[1];
+      const p=source.find(x=>x.id===id);
+      const text=norm(card.dataset.search||card.textContent||'');
+      const q=p||{};const s=num(q.stock);
+      const searchOk=!search||text.includes(search);
+      const brandOk=brand==='all'||norm(q.brand)===brand;
+      const categoryOk=category==='all'||norm(q.category)===category;
+      const stockOk=stock==='all'||(stock==='available'&&s>0)||(stock==='low'&&s>0&&s<=5)||(stock==='zero'&&s<=0);
+      card.style.display=searchOk&&brandOk&&categoryOk&&stockOk?'':'none';
+    });
+  }
+
+  function watchQuoteProductFilters(){
+    const modalBox=document.getElementById('modalBox');
+    if(!modalBox||modalBox.dataset.quoteFilterWatcher)return;
+    modalBox.dataset.quoteFilterWatcher='1';
+    const observer=new MutationObserver(()=>{
+      clearTimeout(observer._timer);
+      observer._timer=setTimeout(()=>{initQuoteProductFilters();},0);
+    });
+    observer.observe(modalBox,{childList:true,subtree:true});
+  }
+
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>{watchProductRows();watchQuoteProductFilters()},{once:true});
+  else setTimeout(()=>{watchProductRows();watchQuoteProductFilters()},50);
 })();
