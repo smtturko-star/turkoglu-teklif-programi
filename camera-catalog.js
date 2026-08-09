@@ -1,6 +1,5 @@
-/* Türkoğlu CCTV kamera kataloğu: giriş yapan hesabın products tablosuna eksikleri ekler. */
+/* Türkoğlu CCTV kamera kataloğu - aktif uygulama oturumu üzerinden eksik ürünleri ekler. */
 (function(){
-  const KEY='turkoglu_camera_catalog_v2';
   const catalog=[];
   const ipBrands=['Avenir','HiLook','Hikvision','Dahua'];
   const hdBrands=['Hikvision','Dahua'];
@@ -18,27 +17,28 @@
   }));
   const norm=v=>String(v??'').trim().toLocaleLowerCase('tr-TR');
   const key=p=>[p.name,p.brand,p.model,p.category].map(norm).join('|');
+  let running=false;
   async function seed(){
+    if(running)return;
     try{
-      const cfg=JSON.parse(localStorage.getItem('turkoglu_sb_cfg')||'{}');
-      if(!cfg.u||!cfg.k||!window.supabase?.createClient)return;
-      const sb=window.supabase.createClient(cfg.u,cfg.k,{auth:{persistSession:true,autoRefreshToken:true}});
-      const session=(await sb.auth.getSession()).data.session;
-      if(!session?.user)return;
-      const r=await sb.from('products').select('name,brand,model,category');
+      if(typeof client==='undefined'||!client||typeof user==='undefined'||!user)return;
+      running=true;
+      const r=await client.from('products').select('name,brand,model,category');
       if(r.error)throw r.error;
       const existing=new Set((r.data||[]).map(key));
       const missing=catalog.filter(p=>!existing.has(key(p)));
       if(missing.length){
-        const ins=await sb.from('products').insert(missing);
+        const ins=await client.from('products').insert(missing);
         if(ins.error)throw ins.error;
       }
-      localStorage.setItem(KEY,'done');
-      if(typeof window.loadAll==='function')await window.loadAll();
-      if(typeof window.renderProducts==='function')window.renderProducts();
-      if(typeof window.toast==='function')window.toast(`${missing.length} kamera ürünü kataloğa eklendi.`);
-    }catch(e){console.error('Kamera kataloğu eklenemedi:',e)}
+      if(typeof loadAll==='function')await loadAll();
+      if(typeof toast==='function'&&missing.length)toast(`${missing.length} kamera ürünü kataloğa eklendi.`);
+    }catch(e){
+      console.error('Kamera kataloğu eklenemedi:',e);
+      if(typeof toast==='function')toast('Kamera kataloğu eklenemedi: '+(e.message||e));
+    }finally{running=false}
   }
+  window.turkogluSeedCameras=seed;
   let tries=0;
-  const timer=setInterval(()=>{tries++;seed();if(tries>120)clearInterval(timer)},500);
+  const timer=setInterval(()=>{tries++;seed();if(tries>120)clearInterval(timer)},1000);
 })();
