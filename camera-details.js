@@ -105,4 +105,34 @@
   }
 
   window.turkogluCleanCameraCatalog=cleanCameraCatalog;
+
+  /*
+   * index.html içindeki eski inline uygulama scriptinde sözdizimi hatası varsa
+   * tarayıcı o scripti hiç çalıştırmaz. Bu küçük kurtarma katmanı, canlı index'i
+   * okur, yalnızca bilinen eksik parantezi düzeltir ve uygulama scriptini global
+   * kapsamda bir kez çalıştırır. URL/key/veritabanı değerlerine dokunmaz.
+   */
+  let recoveryStarted=false;
+  async function recoverBrokenIndexScript(){
+    if(recoveryStarted)return;
+    recoveryStarted=true;
+    try{
+      if(typeof window.saveConfig==='function' && typeof window.start==='function')return;
+      const response=await fetch('./index.html?recovery='+Date.now(),{cache:'no-store'});
+      if(!response.ok)throw new Error('index.html kurtarma dosyası okunamadı: HTTP '+response.status);
+      const html=await response.text();
+      const match=html.match(/<script>\s*([\s\S]*?)<\/script>\s*<script src="\.\/camera-catalog\.js">/i);
+      if(!match)throw new Error('Ana uygulama scripti bulunamadı.');
+      const broken=match[1];
+      const fixed=broken.replace("\"'\":'&#039;'}[m]),today=", "\"'\":'&#039;'}[m])),today=");
+      if(fixed===broken)throw new Error('Bilinen JavaScript sözdizimi hatası bulunamadı.');
+      (0,eval)(fixed);
+      console.info('Türkoğlu: bozuk inline uygulama scripti kurtarıldı.');
+    }catch(e){
+      console.error('Türkoğlu uygulama kurtarma:',e);
+      const msg=document.getElementById('authMsg');
+      if(msg)msg.textContent='Uygulama JavaScript hatası düzeltilemedi: '+(e?.message||String(e));
+    }
+  }
+  recoverBrokenIndexScript();
 })();
