@@ -14,18 +14,22 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Inject catalog script into index.html
+      - name: Inject camera catalog and cleanup scripts into index.html
         run: |
           python3 - <<'PY'
           from pathlib import Path
           p=Path('index.html')
           s=p.read_text(encoding='utf-8')
-          marker='camera-catalog.js'
-          if marker not in s:
-              needle='</body>'
-              if needle not in s:
-                  raise SystemExit('index.html içinde </body> bulunamadı')
-              s=s.replace(needle, '<script src="./camera-catalog.js"></script>\n'+needle, 1)
+          needle='</body>'
+          if needle not in s:
+              raise SystemExit('index.html içinde </body> bulunamadı')
+          additions=[]
+          if 'camera-catalog.js' not in s:
+              additions.append('<script src="./camera-catalog.js"></script>')
+          if 'camera-details.js' not in s:
+              additions.append('<script src="./camera-details.js"></script>')
+          if additions:
+              s=s.replace(needle, '\n'.join(additions)+'\n'+needle, 1)
               p.write_text(s, encoding='utf-8')
           PY
       - name: Commit injected index
@@ -36,6 +40,6 @@ jobs:
           if git diff --cached --quiet; then
             echo "No injection needed"
           else
-            git commit -m "Kamera kataloğu scriptini index.html içine bağla"
+            git commit -m "Kamera katalog ve temizlik scriptlerini index.html'e bağla"
             git push
           fi
