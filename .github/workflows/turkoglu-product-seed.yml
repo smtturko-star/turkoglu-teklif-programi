@@ -47,7 +47,7 @@ jobs:
     {name:'IP Bullet Kamera 4MP',brand:'Dahua',model:'IPC-HFW1430',category:'IP Kamera',purchase_price:0,sale_price:0,vat_rate:20,stock:0,description:'4MP IP bullet kamera'}
   ];
   async function seed(){
-    if(!window.client||!window.user)return false;
+    if(typeof client==='undefined'||typeof user==='undefined'||!client||!user)return false;
     const {data:existing,error}=await client.from('products').select('name,brand,model');
     if(error)return false;
     const keys=new Set((existing||[]).map(p=>String((p.brand||'')+'|'+(p.model||'')).toLowerCase()));
@@ -71,5 +71,5 @@ jobs:
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add index.html
           if git diff --cached --quiet; then echo 'Değişiklik yok.'; exit 0; fi
-          git commit -m 'feat: yaygın kamera ürünlerini hazırla'
+          git commit -m 'fix: ürün seed helper oturum kapsamını düzelt'
           git push
