@@ -1,29 +1,10 @@
-/* Supabase browser SDK fallback: keep the existing URL/key screen, but recover if the primary CDN is blocked. */
+/* Türkoğlu CCTV katalog + güvenli ürün seed */
 (function(){
-  if(window.supabase && typeof window.supabase.createClient==='function') return;
-  if(window.__turkogluSupabaseFallbackStarted) return;
-  window.__turkogluSupabaseFallbackStarted=true;
-  const loadScript=(src,done)=>{const s=document.createElement('script');s.src=src;s.async=true;s.onload=()=>done(true);s.onerror=()=>done(false);document.head.appendChild(s)};
-  loadScript('https://unpkg.com/@supabase/supabase-js@2',ok=>{
-    if(ok && window.supabase && typeof window.supabase.createClient==='function'){
-      if(typeof window.start==='function') window.start();
-      return;
-    }
-    import('https://esm.sh/@supabase/supabase-js@2').then(m=>{
-      window.supabase={createClient:m.createClient};
-      if(typeof window.start==='function') window.start();
-    }).catch(()=>{
-      const msg=document.getElementById('authMsg');
-      if(msg) msg.textContent='Supabase bağlantı kütüphanesi yüklenemedi. Sayfayı yenileyip tekrar deneyin.';
-    });
-  });
-})();
-
-/* Türkoğlu CCTV katalog + ürün görsel otomasyonu + filtreler */
-(function(){
+  'use strict';
   if(window.__turkogluCameraCatalogLoaded)return;
   window.__turkogluCameraCatalogLoaded=true;
 
+  const norm=v=>String(v??'').trim().toLocaleLowerCase('tr-TR');
   const catalog=[
     ['Avenir','2MP IP Kamera','AV-IP3020-I'],['Avenir','4MP IP Kamera','AV-IP4045-IS'],['Avenir','6MP IP Kamera','AV-M21'],['Avenir','8MP IP Kamera','AV-S242X'],
     ['Avenir','2MP HD Kamera','AV-DF234'],['Avenir','4MP HD Kamera','AV-DF418AHD'],
@@ -33,6 +14,11 @@
     ['Dahua','2MP IP Kamera','IPC-HFW1230S-S4'],['Dahua','4MP IP Kamera','DH-IPC-HFW1431S-S4'],['Dahua','6MP IP Kamera','IPC-HDW2649TM-S-IL'],['Dahua','8MP IP Kamera','DH-IPC-HFW3849T1-AS-PV'],
     ['Dahua','2MP HD Kamera','HAC-HFW1239MH(-A)-LED'],['Dahua','4MP HD Kamera','HAC-HFW1400TH-I4'],['Dahua','6MP HD Kamera','HAC-HFW2601E-A'],['Dahua','8MP HD Kamera','HAC-HFW1801T-A']
   ].map(([brand,category,model])=>({name:`${brand} ${category}`,brand,model,category,purchase_price:0,sale_price:0,vat_rate:20,stock:0,description:`${brand} ${category} — doğrulanmış model ${model}.`,image_url:null}));
+
+  const extraProducts=[
+    {name:"3'lü Grup Priz",brand:'Standart',model:'3LÜ-GRUP-PRİZ',category:'Elektrik Malzemeleri',purchase_price:0,sale_price:0,vat_rate:20,stock:0,description:'3 çıkışlı grup priz',image_url:null},
+    {name:'Erkek Fiş',brand:'Standart',model:'ERKEK-FİŞ',category:'Elektrik Malzemeleri',purchase_price:0,sale_price:0,vat_rate:20,stock:0,description:'Standart erkek fiş',image_url:null}
+  ];
 
   const imageMap={
     'hikvision|ds-2cd1023g2-i(uf)':'https://www.oncuguvenlik.com.tr/image/cache/catalog/ds-2cd1023g2-iufm-ds-2cd1023g2-iufm-hikvision-tr-tr-600x800.png',
@@ -50,91 +36,36 @@
     'avenir|av-ip3020-i':'https://avenirbayi.com/images/av_p_3035.jpg'
   };
 
-  const norm=v=>String(v??'').trim().toLocaleLowerCase('tr-TR');
-  const key=p=>[p.name,p.brand,p.model,p.category].map(norm).join('|');
-  const imageKey=p=>`${norm(p.brand)}|${norm(p.model)}`;
-  let running=false,imageRunning=false;
+  const key=p=>norm(`${p.name}|${p.brand}|${p.model}|${p.category}`);
+  const modelKey=p=>norm(`${p.brand}|${p.model}`);
+  let busy=false;
 
-  async function refreshExactProductCount(){
-    if(typeof client==='undefined'||!client||typeof user==='undefined'||!user)return;
-    try{const r=await client.from('products').select('id',{count:'exact',head:true});if(r.error)throw r.error;const total=Number(r.count)||0;const el=document.getElementById('kp');if(el)el.textContent=String(total);window.turkogluProductTotal=total;}catch(e){console.error('Ürün toplamı:',e)}
+  async function seedProducts(){
+    if(busy||typeof client==='undefined'||!client||typeof user==='undefined'||!user)return;
+    busy=true;
+    try{
+      const r=await client.from('products').select('id,name,brand,model,category,image_url');
+      if(r.error)throw r.error;
+      const rows=r.data||[];
+      const existing=new Set(rows.map(key));
+      const wanted=[...catalog,...extraProducts];
+      const missing=wanted.filter(p=>!existing.has(key(p)));
+      if(missing.length){
+        const ins=await client.from('products').insert(missing);
+        if(ins.error)throw ins.error;
+      }
+      const refreshed=await client.from('products').select('id,brand,model,image_url');
+      if(!refreshed.error){
+        const updates=(refreshed.data||[]).filter(p=>!String(p.image_url||'').trim()&&imageMap[modelKey(p)]);
+        for(const p of updates){await client.from('products').update({image_url:imageMap[modelKey(p)]}).eq('id',p.id);}
+      }
+      if(typeof loadAll==='function')await loadAll();
+      if(typeof window.turkogluRefreshProductFilters==='function')window.turkogluRefreshProductFilters();
+    }catch(e){console.error('Kamera/elektrik ürün seed:',e)}finally{busy=false;}
   }
 
-  async function seed(){
-    if(running||typeof client==='undefined'||!client||typeof user==='undefined'||!user)return;
-    running=true;
-    try{const r=await client.from('products').select('name,brand,model,category');if(r.error)throw r.error;const existing=new Set((r.data||[]).map(key));const missing=catalog.filter(p=>!existing.has(key(p)));if(missing.length){const ins=await client.from('products').insert(missing);if(ins.error)throw ins.error;if(typeof loadAll==='function')await loadAll();}await refreshExactProductCount();}catch(e){console.error('Kamera kataloğu:',e)}finally{running=false}
-  }
-
-  async function autoFillImages(){
-    if(imageRunning||typeof client==='undefined'||!client||typeof user==='undefined'||!user)return;
-    imageRunning=true;
-    try{const r=await client.from('products').select('id,brand,model,image_url');if(r.error)throw r.error;const updates=(r.data||[]).filter(p=>!String(p.image_url||'').trim()&&imageMap[imageKey(p)]).map(p=>client.from('products').update({image_url:imageMap[imageKey(p)]}).eq('id',p.id));if(updates.length){await Promise.all(updates);if(typeof loadAll==='function')await loadAll();}window.turkogluImageFilled=updates.length;}catch(e){console.error('Otomatik ürün görselleri:',e)}finally{imageRunning=false}
-  }
-
-  window.turkogluSeedCameras=seed;window.turkogluRefreshProductCount=refreshExactProductCount;window.turkogluAutoFillImages=autoFillImages;
-  const originalRender=window.render;if(typeof originalRender==='function')window.render=function(){const result=originalRender.apply(this,arguments);refreshExactProductCount();return result;};
-
-  const state={search:'',brand:'',category:'',stock:'',sort:'name:asc'};let rowsData=[],panel=null,listenersReady=false;
-  function compare(a,b,field,dir){if(field==='price')return((Number(a.sale_price)||0)-(Number(b.sale_price)||0))*dir;if(field==='stock')return((Number(a.stock)||0)-(Number(b.stock)||0))*dir;return norm(a[field]).localeCompare(norm(b[field]),'tr',{numeric:true,sensitivity:'base'})*dir;}
-  function filtered(){const q=norm(state.search);let list=rowsData.filter(p=>{const hay=norm([p.name,p.brand,p.model,p.category,p.description].join(' '));if(q&&!hay.includes(q))return false;if(state.brand&&norm(p.brand)!==norm(state.brand))return false;if(state.category&&norm(p.category)!==norm(state.category))return false;if(state.stock==='in'&&(Number(p.stock)||0)<=0)return false;if(state.stock==='out'&&(Number(p.stock)||0)>0)return false;return true;});const [field,d]=(state.sort||'name:asc').split(':');list.sort((a,b)=>compare(a,b,field,d==='desc'?-1:1));return list;}
-  function renderRows(){const tbody=document.getElementById('productRows');if(!tbody)return;const list=filtered();const count=document.getElementById('productFilterCount');if(count)count.textContent=`${list.length} ürün gösteriliyor / ${rowsData.length} toplam`;tbody.innerHTML=list.map(p=>`<tr><td>${p.image_url?`<img class="thumb" src="${esc(p.image_url)}" alt="${esc(p.name)}" loading="lazy">`:'-'}</td><td><b>${esc(p.name)}</b><br>${esc(p.brand||'')}</td><td>${esc(p.model||'')}</td><td>${esc(p.category||'')}</td><td>${money(p.sale_price)}</td><td>%${num(p.vat_rate)}</td><td><div class="rowactions"><button onclick="productModal('${p.id}')">Düzenle</button><button class="red" onclick="deleteProduct('${p.id}')">Sil</button></div></td></tr>`).join('')||'<tr><td colspan="7">Filtreye uyan ürün bulunamadı.</td></tr>';}
-  async function loadFilterData(){if(typeof client==='undefined'||!client||typeof user==='undefined'||!user)return;try{const r=await client.from('products').select('*').order('name',{ascending:true});if(r.error)throw r.error;rowsData=r.data||[];buildPanel();renderRows();}catch(e){console.error('Ürün filtreleri:',e)}}
-  function buildPanel(){const rows=document.getElementById('productRows');if(!rows)return;const card=rows.closest('.card');const actions=card?.querySelector('.actions');if(!card||!actions)return;if(panel&&document.body.contains(panel))return;panel=document.createElement('div');panel.id='productFilters';panel.style.cssText='display:grid;grid-template-columns:minmax(220px,2fr) repeat(4,minmax(130px,1fr)) auto;gap:8px;align-items:end;margin:14px 0;padding:12px;background:#f8fafc;border:1px solid #e5e7eb;border-radius:10px';panel.innerHTML=`<div><label>Ürün ara</label><input id="productSearch" type="search" placeholder="Ürün, marka, model, kategori..." autocomplete="off"></div><div><label>Marka</label><select id="productBrandFilter"><option value="">Tüm markalar</option></select></div><div><label>Kategori</label><select id="productCategoryFilter"><option value="">Tüm kategoriler</option></select></div><div><label>Stok</label><select id="productStockFilter"><option value="">Tüm stoklar</option><option value="in">Stokta var</option><option value="out">Stokta yok</option></select></div><div><label>Sıralama</label><select id="productSort"><option value="name:asc">Ürün A → Z</option><option value="name:desc">Ürün Z → A</option><option value="brand:asc">Marka A → Z</option><option value="brand:desc">Marka Z → A</option><option value="category:asc">Kategori A → Z</option><option value="category:desc">Kategori Z → A</option><option value="model:asc">Model A → Z</option><option value="model:desc">Model Z → A</option><option value="price:asc">Fiyat düşük → yüksek</option><option value="price:desc">Fiyat yüksek → düşük</option><option value="stock:asc">Stok az → çok</option><option value="stock:desc">Stok çok → az</option></select></div><div><button id="productFilterReset" class="light" type="button">Temizle</button></div><div id="productFilterCount" class="muted" style="grid-column:1/-1">0 ürün gösteriliyor</div>`;actions.insertAdjacentElement('afterend',panel);const brand=document.getElementById('productBrandFilter'),category=document.getElementById('productCategoryFilter');[...new Set(rowsData.map(p=>String(p.brand||'').trim()).filter(Boolean))].sort((a,b)=>norm(a).localeCompare(norm(b),'tr')).forEach(v=>brand.insertAdjacentHTML('beforeend',`<option value="${esc(v)}">${esc(v)}</option>`));[...new Set(rowsData.map(p=>String(p.category||'').trim()).filter(Boolean))].sort((a,b)=>norm(a).localeCompare(norm(b),'tr')).forEach(v=>category.insertAdjacentHTML('beforeend',`<option value="${esc(v)}">${esc(v)}</option>`));if(listenersReady)return;const apply=()=>{state.search=document.getElementById('productSearch').value;state.brand=brand.value;state.category=category.value;state.stock=document.getElementById('productStockFilter').value;state.sort=document.getElementById('productSort').value;renderRows();};['productSearch','productBrandFilter','productCategoryFilter','productStockFilter','productSort'].forEach(id=>document.getElementById(id).addEventListener(id==='productSearch'?'input':'change',apply));document.getElementById('productFilterReset').addEventListener('click',()=>{state.search='';state.brand='';state.category='';state.stock='';state.sort='name:asc';document.getElementById('productSearch').value='';brand.value='';category.value='';document.getElementById('productStockFilter').value='';document.getElementById('productSort').value='name:asc';renderRows();});listenersReady=true;}
-
-  window.turkogluRefreshProductFilters=loadFilterData;
-  setInterval(()=>{if(document.getElementById('productRows')&&typeof user!=='undefined'&&user)loadFilterData();},5000);
-  setInterval(refreshExactProductCount,5000);
-  setInterval(autoFillImages,7000);
-  setTimeout(()=>{seed();autoFillImages();},1200);
-})();
-
-/* TURKOGLU_QUOTE_REMOVE_AND_TWO_PRODUCTS */
-(function(){
-  const norm=v=>String(v??'').trim().replace(/\s+/g,'').toLocaleLowerCase('tr-TR');
-  async function seedTwoProducts(){
-    if(typeof client==='undefined'||!client||typeof user==='undefined'||!user)return false;
-    const wanted=[
-      {name:'3'lü Grup Priz',brand:'Standart',model:'3LÜ-GRUP-PRİZ',category:'Elektrik Malzemeleri',purchase_price:0,sale_price:0,vat_rate:20,stock:0,description:'3 çıkışlı grup priz'},
-      {name:'Erkek Fiş',brand:'Standart',model:'ERKEK-FİŞ',category:'Elektrik Malzemeleri',purchase_price:0,sale_price:0,vat_rate:20,stock:0,description:'Standart erkek fiş'}
-    ];
-    const r=await client.from('products').select('name,brand,model');
-    if(r.error)return false;
-    const keys=new Set((r.data||[]).map(p=>norm((p.brand||'')+'|'+(p.model||''))));
-    const missing=wanted.filter(p=>!keys.has(norm(p.brand+'|'+p.model)));
-    if(!missing.length)return true;
-    const ins=await client.from('products').insert(missing);
-    if(ins.error){console.error('İki elektrik ürünü:',ins.error);return false;}
-    if(typeof loadAll==='function')await loadAll();
-    return true;
-  }
-
-  function installQuoteRemove(){
-    const modal=document.getElementById('modalBox');
-    if(!modal||modal.dataset.turkQuoteRemove==='1')return !!modal;
-    modal.dataset.turkQuoteRemove='1';
-    modal.addEventListener('click',function(ev){
-      const btn=ev.target.closest('button');
-      if(!btn||!modal.contains(btn))return;
-      if(norm(btn.textContent)!=='×' && norm(btn.textContent)!=='x')return;
-      const row=btn.closest('#qitems tr');
-      if(!row||!Array.isArray(window.quoteDraft?.items))return;
-      const rows=[...modal.querySelectorAll('#qitems tr')];
-      const index=rows.indexOf(row);
-      if(index<0)return;
-      ev.preventDefault();
-      ev.stopImmediatePropagation();
-      window.quoteDraft.items.splice(index,1);
-      if(typeof window.renderQuoteDraft==='function')window.renderQuoteDraft();
-    },true);
-    return true;
-  }
-
-  function boot(){
-    installQuoteRemove();
-    seedTwoProducts();
-  }
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
-  const timer=setInterval(()=>{installQuoteRemove();if(typeof user!=='undefined'&&user)seedTwoProducts();},2000);
-  setTimeout(()=>clearInterval(timer),60000);
+  window.turkogluSeedCameras=seedProducts;
+  window.turkogluRefreshProductFilters=()=>{};
+  setTimeout(seedProducts,1200);
+  setInterval(()=>{if(typeof user!=='undefined'&&user)seedProducts();},15000);
 })();
