@@ -2,7 +2,6 @@
 (function(){
   'use strict';
 
-  /* URL/key mevcut değerlerden okunur; değerler değiştirilmez. */
   async function connectFromSetup(){
     const urlEl=document.getElementById('cfgUrl');
     const keyEl=document.getElementById('cfgKey');
@@ -11,13 +10,11 @@
     const auth=document.getElementById('authBox');
     const u=(urlEl?.value||'').trim().replace(/\/$/,'');
     const k=(keyEl?.value||'').trim();
-
     if(msgEl)msgEl.textContent='';
     if(!/^https:\/\/[a-z0-9-]+\.supabase\.co$/i.test(u)||!k){
       if(msgEl)msgEl.textContent='Supabase Proje URL ve Publishable / Anon Key gerekli.';
       return;
     }
-
     try{
       localStorage.setItem('turkoglu_sb_cfg',JSON.stringify({u,k}));
       if(typeof initClient!=='function')throw new Error('Bağlantı motoru yüklenemedi.');
@@ -36,7 +33,6 @@
     }
   }
 
-  /* Inline onclick tarafından çağrılan fonksiyonu güvenli akışla değiştir. */
   window.saveConfig=connectFromSetup;
 
   const details={
@@ -106,12 +102,46 @@
 
   window.turkogluCleanCameraCatalog=cleanCameraCatalog;
 
-  /*
-   * index.html içindeki eski inline uygulama scriptinde sözdizimi hatası varsa
-   * tarayıcı o scripti hiç çalıştırmaz. Bu küçük kurtarma katmanı, canlı index'i
-   * okur, yalnızca bilinen eksik parantezi düzeltir ve uygulama scriptini global
-   * kapsamda bir kez çalıştırır. URL/key/veritabanı değerlerine dokunmaz.
-   */
+  /* Görsel güvenlik: ürün modeline uymayan veya güvenilmeyen harici görselleri katalogdan kaldırır. */
+  let imageSafetyRunning=false;
+  async function enforceProductImageSafety(){
+    if(imageSafetyRunning||typeof client==='undefined'||!client||typeof user==='undefined'||!user)return;
+    imageSafetyRunning=true;
+    try{
+      const r=await client.from('products').select('id,name,brand,model,image_url');
+      if(r.error)throw r.error;
+      const rows=r.data||[];
+      const badHost=/\.(porn|xxx|sex|adult)(?:[/:]|$)/i;
+      const badPath=/(porn|porno|pornographic|xxx|sexcam|adult[-_ ]?content)/i;
+      const targetModel='ds-7104hghi-k1';
+      const changed=[];
+      for(const p of rows){
+        const url=String(p.image_url||'').trim();
+        if(!url)continue;
+        const isTarget=norm(p.model)===targetModel;
+        let unsafe=false;
+        try{
+          const parsed=new URL(url);
+          unsafe=badHost.test(parsed.hostname)||badPath.test(parsed.hostname+parsed.pathname+parsed.search);
+        }catch(e){
+          unsafe=true;
+        }
+        if(isTarget||unsafe){
+          const u=await client.from('products').update({image_url:null}).eq('id',p.id);
+          if(u.error)throw u.error;
+          changed.push(p.model||p.name);
+        }
+      }
+      if(changed.length&&typeof loadAll==='function')await loadAll();
+      if(changed.length)console.info('Türkoğlu görsel güvenliği: uygunsuz/şüpheli görseller kaldırıldı.',changed);
+    }catch(e){
+      console.error('Ürün görsel güvenliği:',e);
+    }finally{
+      imageSafetyRunning=false;
+    }
+  }
+  window.turkogluEnforceProductImageSafety=enforceProductImageSafety;
+
   let recoveryStarted=false;
   async function recoverBrokenIndexScript(){
     if(recoveryStarted)return;
@@ -135,4 +165,13 @@
     }
   }
   recoverBrokenIndexScript();
+
+  /* Uygulama hazır olduğunda güvenlik kontrolünü birkaç kez dene; katalog yüklenmesini bekler. */
+  const safetyTimer=setInterval(()=>{
+    if(typeof client!=='undefined'&&client&&typeof user!=='undefined'&&user){
+      clearInterval(safetyTimer);
+      enforceProductImageSafety();
+    }
+  },1500);
+  setTimeout(()=>clearInterval(safetyTimer),30000);
 })();
