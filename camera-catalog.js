@@ -13,20 +13,27 @@
     ['Dahua','2MP HD Kamera','HAC-HFW1239MH(-A)-LED'],['Dahua','4MP HD Kamera','HAC-HFW1400TH-I4'],['Dahua','6MP HD Kamera','HAC-HFW2601E-A'],['Dahua','8MP HD Kamera','HAC-HFW1801T-A']
   ].map(([brand,category,model])=>({name:`${brand} ${category}`,brand,model,category,purchase_price:0,sale_price:0,vat_rate:20,stock:0,description:`${brand} ${category} — doğrulanmış model ${model}.`,image_url:null}));
 
-  /* Doğrudan doğrulanabilen ürün fotoğrafları. Mevcut kullanıcı fotoğrafı ASLA ezilmez. */
+  /* Yalnızca modelle doğrulanmış görseller. Mevcut kullanıcı fotoğrafı ASLA ezilmez. */
   const imageMap={
     'hikvision|ds-2cd1023g2-i(uf)':'https://www.oncuguvenlik.com.tr/image/cache/catalog/ds-2cd1023g2-iufm-ds-2cd1023g2-iufm-hikvision-tr-tr-600x800.png',
     'hikvision|ds-2cd1043g2-liu(f)':'https://www.oncuguvenlik.com.tr/image/cache/catalog/ds-2cd1043g2-liuf-ds-2cd1043g2-liuf-hikvision-tr-tr-600x800.png',
+    'hikvision|ds-2cd3063g2-liu':'https://www.hikvision.com/content/dam/hikvision/products/asset/M000135481/images/%E7%AD%92%E6%9C%BA91-%E5%8A%A0%E5%8F%8Cmic%E5%8F%8C%E5%85%89-%E5%8F%B3%E4%BE%A7-%E6%B5%B7%E5%BA%B7%E7%99%BD.png',
+    'hikvision|ds-2cd3083g2-liu/sl':'https://assets.hikvision.com/prd/normal/all/image/m000077132/%E7%AD%92%E6%9C%BA39-%E5%A3%B0%E5%85%89%E6%8A%A5%E8%AD%A6-%E5%9F%BA%E7%BA%BF-%E5%B7%A6%E4%BE%A7.png',
     'hilook|ipc-b140h':'https://cdn.allmarket.ge/2601/01/12/83/80/81ccd539f0fb472f8f5425ef5a99a11b/video-satvaltvalo-kamera-hilook-ipc-b140h-2-8mm-4-mp-fixed-bullet-network-camera-white.png',
     'dahua|ipc-hfw1230s-s4':'https://sanatelektirik.com.tr/Resim/Minik/1500x1500_thumb_dahuaipc-hfw1230s-s-0360b-s42mp36mmip67sdka_65.jpg',
+    'dahua|dh-ipc-hfw1431s-s4':'https://vidcom.uz/components/com_jshopping/files/img_products/full_full_full_2024-09-25_21-13-3912.jpg',
+    'dahua|ipc-hdw2649tm-s-il':'https://www.dahuasecurity.com/content/dam/dahua-site/products/network-cameras/wizsense-2-series/smart-dual-light/ipc-hdw2649tm-s-il/images/IPC-HDW2649TM-S-IL_View_45left-logo.png',
     'dahua|dh-ipc-hfw3849t1-as-pv':'https://darkcoon.es/288829-large_default/dahua-ipc-hfw3849t1-as-pv-0280b-pro-tubular-ip-wizcolor-tioc-pro-h265-8m-wdr-iluminacion-dual-led50m-ir50m-28mm-ip67-poe-audio.jpg',
-    'dahua|hac-hfw1239mh(-a)-led':'https://cdn.jmt.bg/images/products/113000/full/523395/analogova-kamera-analogova-kamera-dahua-hac-hfw1239mh-a-led-0360b-s3-1.jpg'
+    'dahua|hac-hfw1239mh(-a)-led':'https://cdn.jmt.bg/images/products/113000/full/523395/analogova-kamera-analogova-kamera-dahua-hac-hfw1239mh-a-led-0360b-s3-1.jpg',
+    'dahua|hac-hfw1801t-a':'https://wirelessshop.mx/ProdImg/DADHHACHFW1801TNA0280B_01.png',
+    'avenir|av-ip4045-is':'https://www.avenir.com.tr/wp-content/uploads/2024/04/AV-BF535.jpg',
+    'avenir|av-ip3020-i':'https://avenirbayi.com/images/av_p_3035.jpg'
   };
 
   const norm=v=>String(v??'').trim().toLocaleLowerCase('tr-TR');
   const key=p=>[p.name,p.brand,p.model,p.category].map(norm).join('|');
   const imageKey=p=>`${norm(p.brand)}|${norm(p.model)}`;
-  let running=false, imageRunning=false;
+  let running=false,imageRunning=false;
 
   async function refreshExactProductCount(){
     if(typeof client==='undefined'||!client||typeof user==='undefined'||!user)return;
@@ -36,29 +43,17 @@
   async function seed(){
     if(running||typeof client==='undefined'||!client||typeof user==='undefined'||!user)return;
     running=true;
-    try{
-      const r=await client.from('products').select('name,brand,model,category');if(r.error)throw r.error;
-      const existing=new Set((r.data||[]).map(key));const missing=catalog.filter(p=>!existing.has(key(p)));
-      if(missing.length){const ins=await client.from('products').insert(missing);if(ins.error)throw ins.error;if(typeof loadAll==='function')await loadAll();}
-      await refreshExactProductCount();
-    }catch(e){console.error('Kamera kataloğu:',e)}finally{running=false}
+    try{const r=await client.from('products').select('name,brand,model,category');if(r.error)throw r.error;const existing=new Set((r.data||[]).map(key));const missing=catalog.filter(p=>!existing.has(key(p)));if(missing.length){const ins=await client.from('products').insert(missing);if(ins.error)throw ins.error;if(typeof loadAll==='function')await loadAll();}await refreshExactProductCount();}catch(e){console.error('Kamera kataloğu:',e)}finally{running=false}
   }
 
   async function autoFillImages(){
     if(imageRunning||typeof client==='undefined'||!client||typeof user==='undefined'||!user)return;
     imageRunning=true;
-    try{
-      const r=await client.from('products').select('id,brand,model,image_url');if(r.error)throw r.error;
-      const updates=(r.data||[]).filter(p=>!String(p.image_url||'').trim()&&imageMap[imageKey(p)]).map(p=>client.from('products').update({image_url:imageMap[imageKey(p)]}).eq('id',p.id));
-      if(updates.length){await Promise.all(updates);if(typeof loadAll==='function')await loadAll();}
-      window.turkogluImageFilled=updates.length;
-    }catch(e){console.error('Otomatik ürün görselleri:',e)}finally{imageRunning=false}
+    try{const r=await client.from('products').select('id,brand,model,image_url');if(r.error)throw r.error;const updates=(r.data||[]).filter(p=>!String(p.image_url||'').trim()&&imageMap[imageKey(p)]).map(p=>client.from('products').update({image_url:imageMap[imageKey(p)]}).eq('id',p.id));if(updates.length){await Promise.all(updates);if(typeof loadAll==='function')await loadAll();}window.turkogluImageFilled=updates.length;}catch(e){console.error('Otomatik ürün görselleri:',e)}finally{imageRunning=false}
   }
 
   window.turkogluSeedCameras=seed;window.turkogluRefreshProductCount=refreshExactProductCount;window.turkogluAutoFillImages=autoFillImages;
-
-  const originalRender=window.render;
-  if(typeof originalRender==='function')window.render=function(){const result=originalRender.apply(this,arguments);refreshExactProductCount();return result;};
+  const originalRender=window.render;if(typeof originalRender==='function')window.render=function(){const result=originalRender.apply(this,arguments);refreshExactProductCount();return result;};
 
   const state={search:'',brand:'',category:'',stock:'',sort:'name:asc'};let rowsData=[],panel=null,listenersReady=false;
   function compare(a,b,field,dir){if(field==='price')return((Number(a.sale_price)||0)-(Number(b.sale_price)||0))*dir;if(field==='stock')return((Number(a.stock)||0)-(Number(b.stock)||0))*dir;return norm(a[field]).localeCompare(norm(b[field]),'tr',{numeric:true,sensitivity:'base'})*dir;}
