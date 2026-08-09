@@ -1,0 +1,73 @@
+name: Turkoglu Safe Patch
+
+on:
+  push:
+    paths:
+      - '.github/workflows/turkoglu-safe-patch.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Patch index.html safely
+        shell: python
+        run: |
+          from pathlib import Path
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+          marker = '/* TURKOGLU_DEVICE_LOGIN_PATCH */'
+          if marker in s:
+              print('Patch zaten uygulanmış.')
+              raise SystemExit(0)
+
+          old = """<p id=\"authMsg\" class=\"muted\"></p>"""
+          new = """<p id=\"authMsg\" class=\"muted\"></p><p class=\"muted\" style=\"margin-top:8px\">Bu cihazda giriş yaptıktan sonra oturum açık kalır. Çıkış yapmadığınız sürece tekrar şifre istenmez.</p>"""
+          if old not in s:
+              raise SystemExit('authMsg hedefi bulunamadı; dosya değiştirilmedi.')
+          s = s.replace(old, new, 1)
+
+          old = """async function login(){\n  const e=$('email')?.value.trim(),p=$('password')?.value||'';"""
+          new = """/* TURKOGLU_DEVICE_LOGIN_PATCH */\nasync function login(){\n  const e=$('email')?.value.trim(),p=$('password')?.value||'';"""
+          if old not in s:
+              raise SystemExit('login hedefi bulunamadı; dosya değiştirilmedi.')
+          s = s.replace(old, new, 1)
+
+          old = """  const r=await client.auth.signInWithPassword({email:e,password:p});\n  if(r.error)$('authMsg').textContent=r.error.message;\n}"""
+          new = """  const r=await client.auth.signInWithPassword({email:e,password:p});\n  if(r.error)$('authMsg').textContent=r.error.message;\n  else localStorage.setItem('turkoglu_last_email',e);\n}"""
+          if old not in s:
+              raise SystemExit('sign-in hedefi bulunamadı; dosya değiştirilmedi.')
+          s = s.replace(old, new, 1)
+
+          old = """function getCfg(){try{return JSON.parse(localStorage.getItem(SBKEY)||'{}')}catch{return {}}}"""
+          new = """function getCfg(){try{return JSON.parse(localStorage.getItem(SBKEY)||'{}')}catch{return {}}}\nfunction restoreLastEmail(){try{const e=localStorage.getItem('turkoglu_last_email');if(e&&$('email'))$('email').value=e}catch{}}"""
+          if old not in s:
+              raise SystemExit('config hedefi bulunamadı; dosya değiştirilmedi.')
+          s = s.replace(old, new, 1)
+
+          old = """    $('setupBox').classList.add('hidden');$('authBox').classList.remove('hidden');\n    return true;"""
+          new = """    $('setupBox').classList.add('hidden');$('authBox').classList.remove('hidden');restoreLastEmail();\n    return true;"""
+          if old not in s:
+              raise SystemExit('auth box hedefi bulunamadı; dosya değiştirilmedi.')
+          s = s.replace(old, new, 1)
+
+          p.write_text(s, encoding='utf-8')
+          print('Güvenli cihaz oturumu iyileştirmesi uygulandı.')
+
+      - name: Commit patch
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          if git diff --cached --quiet; then
+            echo 'Değişiklik yok.'
+            exit 0
+          fi
+          git commit -m 'feat: cihazda oturumu kolaylaştır'
+          git push
