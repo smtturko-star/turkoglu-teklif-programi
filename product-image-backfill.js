@@ -28,6 +28,7 @@
   const k=(brand,model)=>`${norm(brand)}|${norm(model)}`;
 
   async function run(){
+    if(window.turkogluImageBackfillDone)return;
     if(typeof client==='undefined'||!client||typeof user==='undefined'||!user)return;
     try{
       const r=await client.from('products').select('id,name,brand,model,category,image_url');
@@ -52,5 +53,12 @@
     }catch(e){console.error('Ürün görsel backfill:',e)}
   }
   window.turkogluBackfillProductImages=run;
-  window.addEventListener('turkoglu:ready',run);
+
+  const app=document.getElementById('app');
+  if(app){
+    const observer=new MutationObserver(()=>{
+      if(!app.classList.contains('hidden')){observer.disconnect();run();}
+    });
+    observer.observe(app,{attributes:true,attributeFilter:['class']});
+  }
 })();
