@@ -1,4 +1,4 @@
-/* Türkoğlu CCTV kamera kataloğu - aktif uygulama oturumu üzerinden eksik ürünleri ekler. */
+/* Türkoğlu CCTV kamera kataloğu v3 - aktif uygulama oturumu üzerinden eksik ürünleri ekler. */
 (function(){
   const catalog=[];
   const ipBrands=['Avenir','HiLook','Hikvision','Dahua'];
@@ -20,25 +20,24 @@
   let running=false;
   async function seed(){
     if(running)return;
+    if(typeof client==='undefined'||!client||typeof user==='undefined'||!user)return;
+    running=true;
     try{
-      if(typeof client==='undefined'||!client||typeof user==='undefined'||!user)return;
-      running=true;
       const r=await client.from('products').select('name,brand,model,category');
       if(r.error)throw r.error;
       const existing=new Set((r.data||[]).map(key));
       const missing=catalog.filter(p=>!existing.has(key(p)));
-      if(missing.length){
-        const ins=await client.from('products').insert(missing);
-        if(ins.error)throw ins.error;
-      }
+      if(!missing.length)return;
+      const ins=await client.from('products').insert(missing);
+      if(ins.error)throw ins.error;
       if(typeof loadAll==='function')await loadAll();
-      if(typeof toast==='function'&&missing.length)toast(`${missing.length} kamera ürünü kataloğa eklendi.`);
+      if(typeof toast==='function')toast(`${missing.length} kamera ürünü kataloğa eklendi.`);
     }catch(e){
       console.error('Kamera kataloğu eklenemedi:',e);
       if(typeof toast==='function')toast('Kamera kataloğu eklenemedi: '+(e.message||e));
     }finally{running=false}
   }
   window.turkogluSeedCameras=seed;
-  let tries=0;
-  const timer=setInterval(()=>{tries++;seed();if(tries>120)clearInterval(timer)},1000);
+  const timer=setInterval(()=>{seed()},1000);
+  setTimeout(()=>clearInterval(timer),120000);
 })();
