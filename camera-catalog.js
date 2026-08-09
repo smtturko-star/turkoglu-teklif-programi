@@ -88,3 +88,53 @@
   setInterval(autoFillImages,7000);
   setTimeout(()=>{seed();autoFillImages();},1200);
 })();
+
+/* TURKOGLU_QUOTE_REMOVE_AND_TWO_PRODUCTS */
+(function(){
+  const norm=v=>String(v??'').trim().replace(/\s+/g,'').toLocaleLowerCase('tr-TR');
+  async function seedTwoProducts(){
+    if(typeof client==='undefined'||!client||typeof user==='undefined'||!user)return false;
+    const wanted=[
+      {name:'3'lü Grup Priz',brand:'Standart',model:'3LÜ-GRUP-PRİZ',category:'Elektrik Malzemeleri',purchase_price:0,sale_price:0,vat_rate:20,stock:0,description:'3 çıkışlı grup priz'},
+      {name:'Erkek Fiş',brand:'Standart',model:'ERKEK-FİŞ',category:'Elektrik Malzemeleri',purchase_price:0,sale_price:0,vat_rate:20,stock:0,description:'Standart erkek fiş'}
+    ];
+    const r=await client.from('products').select('name,brand,model');
+    if(r.error)return false;
+    const keys=new Set((r.data||[]).map(p=>norm((p.brand||'')+'|'+(p.model||''))));
+    const missing=wanted.filter(p=>!keys.has(norm(p.brand+'|'+p.model)));
+    if(!missing.length)return true;
+    const ins=await client.from('products').insert(missing);
+    if(ins.error){console.error('İki elektrik ürünü:',ins.error);return false;}
+    if(typeof loadAll==='function')await loadAll();
+    return true;
+  }
+
+  function installQuoteRemove(){
+    const modal=document.getElementById('modalBox');
+    if(!modal||modal.dataset.turkQuoteRemove==='1')return !!modal;
+    modal.dataset.turkQuoteRemove='1';
+    modal.addEventListener('click',function(ev){
+      const btn=ev.target.closest('button');
+      if(!btn||!modal.contains(btn))return;
+      if(norm(btn.textContent)!=='×' && norm(btn.textContent)!=='x')return;
+      const row=btn.closest('#qitems tr');
+      if(!row||!Array.isArray(window.quoteDraft?.items))return;
+      const rows=[...modal.querySelectorAll('#qitems tr')];
+      const index=rows.indexOf(row);
+      if(index<0)return;
+      ev.preventDefault();
+      ev.stopImmediatePropagation();
+      window.quoteDraft.items.splice(index,1);
+      if(typeof window.renderQuoteDraft==='function')window.renderQuoteDraft();
+    },true);
+    return true;
+  }
+
+  function boot(){
+    installQuoteRemove();
+    seedTwoProducts();
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
+  const timer=setInterval(()=>{installQuoteRemove();if(typeof user!=='undefined'&&user)seedTwoProducts();},2000);
+  setTimeout(()=>clearInterval(timer),60000);
+})();
