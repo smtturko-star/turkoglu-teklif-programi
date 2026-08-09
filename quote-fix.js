@@ -4,9 +4,7 @@
 
   const norm = v => String(v ?? '').trim().toLocaleLowerCase('tr-TR');
   const products = () => Array.isArray(window.products) ? window.products : [];
-  const subOf = p => String(
-    p?.subcategory ?? p?.sub_category ?? p?.altCategory ?? p?.alt_category ?? p?.altKategori ?? ''
-  ).trim();
+  const subOf = p => String(p?.subcategory ?? p?.sub_category ?? p?.altCategory ?? p?.alt_category ?? p?.altKategori ?? '').trim();
 
   function findProduct(card){
     const list = products();
@@ -23,27 +21,44 @@
   function getModal(){ return document.getElementById('modalBox'); }
   function getPicker(){ return document.getElementById('quoteProducts'); }
 
+  /* Eklenen ürünler kutusunu ürün seçme listesinin ÜSTÜNDE tut.
+     Sadece yerleşimi izler; filtre kontrollerini yeniden oluşturmaz. */
   function moveSelected(){
     const modal = getModal(), picker = getPicker();
     if(!modal || !picker) return;
-    const table = [...modal.querySelectorAll('table')].find(t =>
-      t !== picker.closest('table') && [...t.querySelectorAll('tr')].some(r => /×|\bx\b|sil|kaldır/i.test(r.textContent || ''))
-    );
+
+    const pickerParent = picker.closest('.card') || picker.parentElement;
+    if(!pickerParent) return;
+
+    const tables = [...modal.querySelectorAll('table')];
+    const table = tables.find(t => {
+      if(t === picker.closest('table')) return false;
+      return [...t.querySelectorAll('tr')].some(r => {
+        const txt = norm(r.textContent || '');
+        return /×|\bx\b|sil|kaldır/.test(txt) || r.querySelector('[onclick*="remove"],[onclick*="delete"],[aria-label="×"]');
+      });
+    });
     if(!table) return;
+
     const box = table.closest('.card') || table.parentElement;
-    if(!box || box === picker) return;
+    if(!box || box === pickerParent || box === picker || !box.parentElement) return;
 
     if(!box.dataset.quoteSelectedBox){
       box.dataset.quoteSelectedBox = '1';
       const title = document.createElement('div');
       title.className = 'quote-selected-title';
       title.innerHTML = '<strong>Teklife Eklenen Ürünler</strong><span class="muted"> Eklediğiniz ürünleri burada görebilirsiniz.</span>';
-      box.parentElement?.insertBefore(title, box);
+      box.parentElement.insertBefore(title, box);
     }
 
-    const pickerParent = picker.closest('.card') || picker.parentElement;
-    if(pickerParent && box !== pickerParent) modal.insertBefore(box, pickerParent);
-    else if(box !== picker) modal.insertBefore(box, picker);
+    // Her zaman aynı parent altında, ürün seçme kartından hemen önce.
+    const parent = pickerParent.parentElement || modal;
+    if(box.parentElement !== parent){
+      parent.insertBefore(box, pickerParent);
+    } else if(box.nextElementSibling !== pickerParent){
+      parent.insertBefore(box, pickerParent);
+    }
+
     box.style.border = '2px solid #0f766e';
     box.style.background = '#f8fffd';
     box.style.marginBottom = '16px';
@@ -59,9 +74,7 @@
 
   function removeDuplicateClearButtons(bar){
     if(!bar) return null;
-    const buttons = [...bar.querySelectorAll('button')].filter(b =>
-      norm(b.textContent).replace(/\s+/g,' ') === 'filtreleri temizle'
-    );
+    const buttons = [...bar.querySelectorAll('button')].filter(b => norm(b.textContent).replace(/\s+/g,' ') === 'filtreleri temizle');
     const keep = buttons[0] || null;
     buttons.slice(1).forEach(b => b.remove());
     return keep;
@@ -86,7 +99,6 @@
     const cat = document.getElementById('quoteProductCategoryFilter');
     const sub = document.getElementById('quoteProductSubcategoryFilter');
     const stock = document.getElementById('quoteProductStockFilter');
-
     const q = norm(input?.value);
     const b = norm(brand?.value || 'all');
     const c = norm(cat?.value || 'all');
@@ -94,8 +106,7 @@
     const s = norm(stock?.value || 'all');
 
     box.querySelectorAll('.p').forEach(card => {
-      const p = findProduct(card);
-      const text = norm(card.textContent);
+      const p = findProduct(card), text = norm(card.textContent);
       const name = norm(p?.name), model = norm(p?.model), pb = norm(p?.brand), pc = norm(p?.category), ps = norm(subOf(p));
       const qty = Number(p?.stock ?? 0);
       const searchOK = !q || [text,name,model,pb,pc,ps].some(v => v.includes(q));
@@ -113,32 +124,22 @@
     const sub = document.getElementById('quoteProductSubcategoryFilter');
     if(!cat || !sub) return;
     const keep = sub.value;
-    const values = [...new Set(
-      products()
-        .filter(p => cat.value === 'all' || norm(p.category) === norm(cat.value))
-        .map(subOf)
-        .filter(Boolean)
-    )].sort((a,b) => a.localeCompare(b,'tr'));
+    const values = [...new Set(products().filter(p => cat.value === 'all' || norm(p.category) === norm(cat.value)).map(subOf).filter(Boolean))].sort((a,b) => a.localeCompare(b,'tr'));
     setOptions(sub, 'Tüm alt kategoriler', values, keep);
   }
 
   function initFilters(){
-    const input = document.getElementById('quoteProductSearch');
-    const box = getPicker();
+    const input = document.getElementById('quoteProductSearch'), box = getPicker();
     if(!input || !box || box.dataset.quoteFilterInit === '1') return;
-
     const bar = input.parentElement;
     if(!bar) return;
-
-    // Bu bayrak en başta konur. Böylece MutationObserver seçim sırasında filtreleri yeniden kuramaz.
     box.dataset.quoteFilterInit = '1';
 
-    let brand = ensureSelect(bar, 'quoteProductBrandFilter');
-    let cat = ensureSelect(bar, 'quoteProductCategoryFilter');
-    let sub = ensureSelect(bar, 'quoteProductSubcategoryFilter');
-    let stock = ensureSelect(bar, 'quoteProductStockFilter');
+    const brand = ensureSelect(bar, 'quoteProductBrandFilter');
+    const cat = ensureSelect(bar, 'quoteProductCategoryFilter');
+    const sub = ensureSelect(bar, 'quoteProductSubcategoryFilter');
+    const stock = ensureSelect(bar, 'quoteProductStockFilter');
     let clear = removeDuplicateClearButtons(bar);
-
     if(!clear){
       clear = document.createElement('button');
       clear.type = 'button';
@@ -149,18 +150,11 @@
     clear.id = 'quoteFilterClear';
 
     const list = products();
-    const brands = [...new Set(list.map(p => String(p.brand || '').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'tr'));
-    const cats = [...new Set(list.map(p => String(p.category || '').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'tr'));
-    const subs = [...new Set(list.map(subOf).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'tr'));
-
-    setOptions(brand, 'Tüm markalar', brands, 'all');
-    setOptions(cat, 'Tüm kategoriler', cats, 'all');
-    setOptions(sub, 'Tüm alt kategoriler', subs, 'all');
+    setOptions(brand, 'Tüm markalar', [...new Set(list.map(p => String(p.brand || '').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'tr')), 'all');
+    setOptions(cat, 'Tüm kategoriler', [...new Set(list.map(p => String(p.category || '').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'tr')), 'all');
+    setOptions(sub, 'Tüm alt kategoriler', [...new Set(list.map(subOf).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'tr')), 'all');
     setOptions(stock, 'Tüm stoklar', ['Mevcut stok','Düşük stok','Stok yok'], 'all');
-    // Stok option value'ları Türkçe görünen metinden bağımsız tutulur.
-    stock.options[1].value = 'available';
-    stock.options[2].value = 'low';
-    stock.options[3].value = 'zero';
+    stock.options[1].value = 'available'; stock.options[2].value = 'low'; stock.options[3].value = 'zero';
 
     input.addEventListener('input', applyFilters);
     brand.addEventListener('change', applyFilters);
@@ -168,15 +162,9 @@
     sub.addEventListener('change', applyFilters);
     stock.addEventListener('change', applyFilters);
     clear.addEventListener('click', () => {
-      input.value = '';
-      brand.value = 'all';
-      cat.value = 'all';
-      sub.value = 'all';
-      stock.value = 'all';
-      refreshSubcategory();
-      applyFilters();
+      input.value = ''; brand.value = 'all'; cat.value = 'all'; sub.value = 'all'; stock.value = 'all';
+      refreshSubcategory(); applyFilters();
     });
-
     applyFilters();
   }
 
@@ -205,27 +193,34 @@
       if(!(label === '×' || label === 'x' || label.includes('sil') || label.includes('kaldır'))) return;
       const row = el.closest('tr');
       const onclick = el.getAttribute('onclick');
-      ev.preventDefault();
-      ev.stopPropagation();
-      if(onclick){
-        try { window.eval(onclick); } catch(e) { console.error(e); }
-      } else if(row){
+      ev.preventDefault(); ev.stopPropagation();
+      if(onclick){ try { window.eval(onclick); } catch(e) { console.error(e); } }
+      else if(row){
         const btn = row.querySelector('[onclick*="remove"],[onclick*="delete"],[onclick*="Quote"],button');
-        if(btn && btn !== el && btn.getAttribute('onclick')){
-          try { window.eval(btn.getAttribute('onclick')); } catch(e) { console.error(e); }
-        }
+        if(btn && btn !== el && btn.getAttribute('onclick')) try { window.eval(btn.getAttribute('onclick')); } catch(e) { console.error(e); }
       }
       setTimeout(moveSelected, 80);
     }, true);
   }
 
+  function observeLayout(){
+    const modal = getModal();
+    if(!modal || modal.dataset.quoteLayoutObserver === '1') return;
+    modal.dataset.quoteLayoutObserver = '1';
+    let queued = false;
+    const schedule = () => {
+      if(queued) return;
+      queued = true;
+      requestAnimationFrame(() => { queued = false; moveSelected(); });
+    };
+    const observer = new MutationObserver(schedule);
+    observer.observe(modal, {childList:true, subtree:true});
+  }
+
   function boot(){
     const modal = getModal();
     if(!modal) return false;
-    initFilters();
-    cardClick();
-    removeFix();
-    moveSelected();
+    initFilters(); cardClick(); removeFix(); observeLayout(); moveSelected();
     return true;
   }
 
@@ -237,6 +232,5 @@
 
   if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start, {once:true});
   else start();
-
   window.turkogluQuoteFix = {apply: applyFilters, moveSelected};
 })();
