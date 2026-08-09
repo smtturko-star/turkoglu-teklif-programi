@@ -13,15 +13,13 @@
     ['Dahua','2MP HD Kamera','HAC-HFW1239MH(-A)-LED'],['Dahua','4MP HD Kamera','HAC-HFW1400TH-I4'],['Dahua','6MP HD Kamera','HAC-HFW2601E-A'],['Dahua','8MP HD Kamera','HAC-HFW1801T-A']
   ].map(([brand,category,model])=>({name:`${brand} ${category}`,brand,model,category,purchase_price:0,sale_price:0,vat_rate:20,stock:0,description:`${brand} ${category} — doğrulanmış model ${model}.`,image_url:null}));
 
-  /* Model bazlı görseller. Kullanıcının yüklediği gerçek ürün görseli ASLA ezilmez. */
+  /* Model bazlı, doğrulanmış görseller. Kullanıcının yüklediği gerçek ürün görseli ASLA ezilmez. */
   const imageMap={
     'hikvision|ds-2cd1023g2-i(uf)':'https://www.oncuguvenlik.com.tr/image/cache/catalog/ds-2cd1023g2-iufm-ds-2cd1023g2-iufm-hikvision-tr-tr-600x800.png',
     'hikvision|ds-2cd1043g2-liu(f)':'https://www.oncuguvenlik.com.tr/image/cache/catalog/ds-2cd1043g2-liuf-ds-2cd1043g2-liuf-hikvision-tr-tr-600x800.png',
     'hikvision|ds-2cd3063g2-liu':'https://www.hikvision.com/content/dam/hikvision/products/asset/M000135481/images/%E7%AD%92%E6%9C%BA91-%E5%8A%A0%E5%8F%8Cmic%E5%8F%8C%E5%85%89-%E5%8F%B3%E4%BE%A7-%E6%B5%B7%E5%BA%B7%E7%99%BD.png',
     'hikvision|ds-2cd3083g2-liu/sl':'https://assets.hikvision.com/prd/normal/all/image/m000077132/%E7%AD%92%E6%9C%BA39-%E5%A3%B0%E5%85%89%E6%8A%A5%E8%AD%A6-%E5%9F%BA%E7%BA%BF-%E5%B7%A6%E4%BE%A7.png',
     'hikvision|ds-2ce56d0t-it3(c)':'https://shopdelta.eu/shop_image/product/ds-2ce56d0t-it3f_d.jpg',
-    'hikvision|ds-2ce12uf3t-e':'https://www.spy-shop.ro/media/catalog/product/cache/1/image/e091ffec11a60d65790217806e67896c/c/a/camera_supraveghere_exterior_hikvision_ultra_low_light_ds-2ce16h8t-it3f_5_mp_ir_60_m_2.8_mm-3-2_3.jpg',
-    'hilook|ipc-b120h-d':'https://product-hub-prd.madeiramadeira.com.br/174027117/images/89789eef-08aa-4801-a1f5-97cee837aebb5912b126ecb3efa49736b635b7.jpg',
     'hilook|ipc-b140h':'https://cdn.allmarket.ge/2601/01/12/83/80/81ccd539f0fb472f8f5425ef5a99a11b/video-satvaltvalo-kamera-hilook-ipc-b140h-2-8mm-4-mp-fixed-bullet-network-camera-white.png',
     'hilook|ipc-b469had-luf/sl':'https://cdn.dynamictech.uk/dynamictech/uploads/products/ITM005900_1.png?canvas.height=1320&canvas.width=1320&crop.type=trim&height=1200&width=1200',
     'hilook|ipc-b180h':'https://www.hilooksecurity.com/content/dam/hikvision/products/asset/M000050151/images/%E7%AD%92%E6%9C%BA39-OEM1-hilook-%E5%85%B1%E7%94%A8%E5%9F%BA%E7%BA%BF%E5%89%8D%E5%A3%B3-%E7%AE%80%E5%8A%9F%E8%83%BD-%E5%8F%B3%E4%BE%A7.png',
@@ -30,8 +28,6 @@
     'dahua|ipc-hdw2649tm-s-il':'https://www.dahuasecurity.com/content/dam/dahua-site/products/network-cameras/wizsense-2-series/smart-dual-light/ipc-hdw2649tm-s-il/images/IPC-HDW2649TM-S-IL_View_45left-logo.png',
     'dahua|dh-ipc-hfw3849t1-as-pv':'https://darkcoon.es/288829-large_default/dahua-ipc-hfw3849t1-as-pv-0280b-pro-tubular-ip-wizcolor-tioc-pro-h265-8m-wdr-iluminacion-dual-led50m-ir50m-28mm-ip67-poe-audio.jpg',
     'dahua|hac-hfw1239mh(-a)-led':'https://cdn.jmt.bg/images/products/113000/full/523395/analogova-kamera-analogova-kamera-dahua-hac-hfw1239mh-a-led-0360b-s3-1.jpg',
-    'dahua|hac-hfw1400th-i4':'https://zabezpieczeniapoznan.pl/images/Iza777/HAC-HFW1500TL-A-0360B%20%281%29.PNG',
-    'dahua|hac-hfw2601e-a':'https://www.pandashop.md/i/products/95/954599.jpg',
     'dahua|hac-hfw1801t-a':'https://wirelessshop.mx/ProdImg/DADHHACHFW1801TNA0280B_01.png',
     'avenir|av-ip4045-is':'https://www.avenir.com.tr/wp-content/uploads/2024/04/AV-BF535.jpg',
     'avenir|av-ip3020-i':'https://avenirbayi.com/images/av_p_3035.jpg'
