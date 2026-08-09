@@ -1,34 +1,11 @@
 name: Add product image URL support
+
+# Disabled: product image support must not rewrite index.html automatically.
 on:
-  push:
-    branches: [main]
-permissions:
-  contents: write
+  workflow_dispatch:
+
 jobs:
-  patch:
+  disabled:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - name: Patch index
-        run: |
-          python3 - <<'PY'
-          from pathlib import Path
-          p=Path('index.html')
-          s=p.read_text(encoding='utf-8')
-          old='<div style="grid-column:1/-1"><label>Gerçek Ürün Görseli (maks. 5 MB)</label><input id="pi" type="file" accept="image/*"></div>'
-          new='<div style="grid-column:1/-1"><label>Görsel URL\'si</label><input id="piurl" type="url" placeholder="https://.../urun-gorseli.jpg" value="${esc(p.image_url||\'\')}"><div id="productUrlPreview" style="margin-top:8px"></div></div><div style="grid-column:1/-1"><label>veya Bilgisayardan Görsel (maks. 5 MB)</label><input id="pi" type="file" accept="image/*"></div>'
-          if old in s and 'id="piurl"' not in s: s=s.replace(old,new,1)
-          old2="const old=products.find(x=>x.id===editing);let image_url=old?.image_url||null;const file=$('pi')?.files?.[0];"
-          new2="const old=products.find(x=>x.id===editing);let image_url=$('piurl')?.value.trim()||old?.image_url||null;const file=$('pi')?.files?.[0];"
-          if old2 in s: s=s.replace(old2,new2,1)
-          marker="  $('pi')?.addEventListener('change',e=>{"
-          add="  $('piurl')?.addEventListener('input',e=>{const u=e.target.value.trim();const box=$('productUrlPreview');if(box)box.innerHTML=u&&/^https?:\\/\\//i.test(u)?`<img class=\"preview-img\" src=\"${esc(u)}\" alt=\"Ürün görseli\" onerror=\"this.style.display='none'\">`:'';});\n  $('piurl')?.dispatchEvent(new Event('input'));\n"
-          if marker in s and 'piurl' in s and 'piurl')?.addEventListener' not in s: s=s.replace(marker,add+marker,1)
-          p.write_text(s,encoding='utf-8')
-          PY
-      - name: Commit
-        run: |
-          git config user.name github-actions[bot]
-          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add index.html
-          git diff --cached --quiet || (git commit -m 'Add product image URL input' && git push)
+      - run: echo "Disabled to protect the production index.html"
