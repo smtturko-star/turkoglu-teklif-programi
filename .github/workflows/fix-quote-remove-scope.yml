@@ -1,0 +1,57 @@
+name: Fix quote remove scope
+
+on:
+  push:
+    paths:
+      - '.github/workflows/fix-quote-remove-scope.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Patch quote remove handler
+        shell: python
+        run: |
+          from pathlib import Path
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+
+          old = 'onclick="quoteDraft.items.splice(${n},1);renderQuoteDraft()"'
+          new = 'onclick="removeQuoteItem(${n})"'
+          if old in s:
+              s = s.replace(old, new)
+          elif new in s:
+              print('Teklif silme butonu zaten güvenli fonksiyonu kullanıyor.')
+          else:
+              raise SystemExit('Teklif silme onclick hedefi bulunamadı; dosya değiştirilmedi.')
+
+          marker = 'function renderQuoteDraft()'
+          helper = '''function removeQuoteItem(index){
+            if(!Array.isArray(quoteDraft.items))return;
+            const n=Number(index);
+            if(!Number.isInteger(n)||n<0||n>=quoteDraft.items.length)return;
+            quoteDraft.items.splice(n,1);
+            renderQuoteDraft();
+          }
+          '''
+          if 'function removeQuoteItem(index)' not in s:
+              if marker not in s:
+                  raise SystemExit('renderQuoteDraft hedefi bulunamadı; dosya değiştirilmedi.')
+              s = s.replace(marker, helper + marker, 1)
+
+          p.write_text(s, encoding='utf-8')
+
+      - name: Commit patch
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          if git diff --cached --quiet; then echo 'Değişiklik yok.'; exit 0; fi
+          git commit -m 'fix: quote item remove scope'
+          git push
