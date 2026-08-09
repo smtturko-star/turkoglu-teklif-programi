@@ -15,7 +15,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Patch index.html
+      - name: Repair index and install search bars
         run: |
           python3 <<'PY'
           from pathlib import Path
@@ -24,12 +24,19 @@ jobs:
           p = Path('index.html')
           text = p.read_text(encoding='utf-8')
 
-          # Remove the accidental literal backslash-newline text and any old search injections.
-          text = text.replace(r'\n\n\n', '')
-          text = text.replace(r'\n\n', '')
-          text = re.sub(r'\n<script id="turkoglu-search-js">[\s\S]*$', '\n', text)
-          text = re.sub(r'\n\\n<!-- TURKOGLU_GLOBAL_SEARCH_V1 -->[\s\S]*$', '\n', text)
-          text = re.sub(r'\n<!-- TURKOGLU_GLOBAL_SEARCH_V1 -->[\s\S]*$', '\n', text)
+          # The previous search injection accidentally inserted a second <script>
+          # inside the application's existing script and printed literal \n text.
+          # Remove everything from that broken injection to the end, then rebuild
+          # the legitimate end of the application script.
+          for marker in ('\n<script id="turkoglu-search-js">', '\n\\n<!-- TURKOGLU_GLOBAL_SEARCH_V1 -->', '\n<!-- TURKOGLU_GLOBAL_SEARCH_V1 -->'):
+              if marker in text:
+                  text = text.split(marker, 1)[0]
+                  break
+
+          # Remove any literal escaped newline text that may be left in the page.
+          text = text.replace(r'\\n\\n\\n', '')
+          text = text.replace(r'\\n\\n', '')
+          text = text.replace(r'\\n', '')
 
           css = '''
           <style id="turkoglu-search-css">
@@ -55,7 +62,7 @@ jobs:
               ['payments','paymentRows','Müşteri, tarih, yöntem veya açıklama ara...']
             ];
             const norm=v=>String(v??'').toLocaleLowerCase('tr-TR');
-            const state={customers:'',products:'',quotes:'',jobs:'',payments:'',quoteProducts:''};
+            const state={customers:'',products:'',quotes:'',jobs:'',payments:''};
 
             function applyRows(key,tbodyId){
               const body=document.getElementById(tbodyId); if(!body)return;
@@ -64,27 +71,29 @@ jobs:
               [...body.querySelectorAll('tr')].forEach(tr=>{
                 const cells=tr.children;
                 if(!cells.length)return;
-                total++;
                 const empty=cells.length===1;
+                if(empty){tr.style.display=q?'none':'';return;}
+                total++;
                 const ok=!q || norm(tr.textContent).includes(q);
                 tr.style.display=ok?'':'none';
-                if(ok && !empty)shown++;
+                if(ok)shown++;
               });
               const c=document.getElementById('search-count-'+key);
-              if(c)c.textContent=q ? shown+' / '+Math.max(0,total-(total-shown)) : 'Toplam '+shown;
+              if(c)c.textContent=q ? shown+' / '+total : 'Toplam '+shown;
             }
 
             function addTableBar(sectionId,tbodyId,placeholder,key){
               const section=document.getElementById(sectionId); if(!section)return;
               if(section.querySelector('[data-search-key="'+key+'"]'))return;
-              const card=section.querySelector('.card'); const table=card?.querySelector('table'); if(!table)return;
+              const card=section.querySelector('.card');
+              const table=card?.querySelector('table');
+              if(!table)return;
               const bar=document.createElement('div');
               bar.className='global-search';
               bar.dataset.searchKey=key;
               bar.innerHTML='<div class="global-search-main"><span class="global-search-icon">🔎</span><input type="search" autocomplete="off" placeholder="'+placeholder+'"></div><span class="global-search-count" id="search-count-'+key+'">Toplam 0</span><button type="button" class="global-search-clear">Temizle</button>';
               table.parentNode.insertBefore(bar,table);
               const input=bar.querySelector('input');
-              input.value=state[key];
               input.addEventListener('input',()=>{state[key]=input.value;applyRows(key,tbodyId)});
               bar.querySelector('.global-search-clear').addEventListener('click',()=>{state[key]='';input.value='';applyRows(key,tbodyId);input.focus()});
               const body=document.getElementById(tbodyId);
@@ -117,18 +126,21 @@ jobs:
           })();
           '''
 
-          # Put the search code inside the existing application <script> block.
           marker='\nstart();'
-          if marker not in text:
-              raise SystemExit('start() marker not found')
-          text=text.replace(marker,'\n'+js+'\nstart();',1)
+          if marker in text:
+              text=text.replace(marker,'\n'+js+'\nstart();',1)
+          else:
+              # The broken injection removed start();, so restore it.
+              text=text.rstrip()+'\n'+js+'\nstart();\n'
 
-          # Keep the document closed exactly once.
-          text=re.sub(r'\n</body></html>\s*$', '\n</body></html>\n', text)
+          # The application script was already open before the broken injection.
+          # Close it and the document exactly once.
+          text=re.sub(r'\s*</script>\s*</body>\s*</html>\s*$', '', text)
+          text=text.rstrip()+'\n</script>\n</body>\n</html>\n'
           p.write_text(text,encoding='utf-8')
           PY
 
-      - name: Validate HTML/JS structure
+      - name: Validate repaired document
         run: |
           python3 - <<'PY'
           from pathlib import Path
@@ -141,10 +153,14 @@ jobs:
           assert 'TURKOGLU_GLOBAL_SEARCH_V1' not in t
           assert 'turkoglu-search-css' in t
           assert 'Müşteri, yetkili, telefon' in t
+          assert '\\n\\n\\n' not in t
+          assert '\\n\\n' not in t
+          assert '\\n' not in t
+          assert '\nstart();' in t
           print('index.html validation OK')
           PY
 
-      - name: Commit patched index
+      - name: Commit repaired index
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -152,6 +168,6 @@ jobs:
           if git diff --cached --quiet; then
             echo "No changes to commit"
           else
-            git commit -m "Fix search bars and remove stray text"
+            git commit -m "Repair index and add working search bars"
             git push
           fi
