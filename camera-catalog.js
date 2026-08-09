@@ -49,11 +49,13 @@
   async function autoFillImages(){
     if(imageRunning||typeof client==='undefined'||!client||typeof user==='undefined'||!user)return;
     imageRunning=true;
-    try{const r=await client.from('products').select('id,brand,model,image_url');if(r.error)throw r.error;const updates=(r.data||[]).filter(p=>!String(p.image_url||'').trim()&&imageMap[imageKey(p)]).map(p=>client.from('products').update({image_url:imageMap[imageKey(p)]}).eq('id',p.id));if(updates.length){await Promise.all(updates);if(typeof loadAll==='function')await loadAll();}window.turkogluImageFilled=updates.length;}catch(e){console.error('Otomatik ürün görselleri:',e)}finally{imageRunning=false}
+    try{const r=await client.from('products').select('id,brand,model,image_url');if(r.error)throw r.error;const targets=(r.data||[]).filter(p=>!String(p.image_url||'').trim()&&imageMap[imageKey(p)]);for(const p of targets){const u=await client.from('products').update({image_url:imageMap[imageKey(p)]}).eq('id',p.id);if(u.error)throw u.error;}if(targets.length&&typeof loadAll==='function')await loadAll();window.turkogluImageFilled=targets.length;}catch(e){console.error('Otomatik ürün görselleri:',e)}finally{imageRunning=false}
   }
 
   window.turkogluSeedCameras=seed;window.turkogluRefreshProductCount=refreshExactProductCount;window.turkogluAutoFillImages=autoFillImages;
-  const originalRender=window.render;if(typeof originalRender==='function')window.render=function(){const result=originalRender.apply(this,arguments);refreshExactProductCount();return result;};
+
+  const originalRender=window.render;
+  if(typeof originalRender==='function')window.render=function(){const result=originalRender.apply(this,arguments);refreshExactProductCount();if(typeof window.turkogluRefreshProductFilters==='function')setTimeout(window.turkogluRefreshProductFilters,0);return result;};
 
   const state={search:'',brand:'',category:'',stock:'',sort:'name:asc'};let rowsData=[],panel=null,listenersReady=false;
   function compare(a,b,field,dir){if(field==='price')return((Number(a.sale_price)||0)-(Number(b.sale_price)||0))*dir;if(field==='stock')return((Number(a.stock)||0)-(Number(b.stock)||0))*dir;return norm(a[field]).localeCompare(norm(b[field]),'tr',{numeric:true,sensitivity:'base'})*dir;}
@@ -63,8 +65,13 @@
   function buildPanel(){const rows=document.getElementById('productRows');if(!rows)return;const card=rows.closest('.card');const actions=card?.querySelector('.actions');if(!card||!actions)return;if(panel&&document.body.contains(panel))return;panel=document.createElement('div');panel.id='productFilters';panel.style.cssText='display:grid;grid-template-columns:minmax(220px,2fr) repeat(4,minmax(130px,1fr)) auto;gap:8px;align-items:end;margin:14px 0;padding:12px;background:#f8fafc;border:1px solid #e5e7eb;border-radius:10px';panel.innerHTML=`<div><label>Ürün ara</label><input id="productSearch" type="search" placeholder="Ürün, marka, model, kategori..." autocomplete="off"></div><div><label>Marka</label><select id="productBrandFilter"><option value="">Tüm markalar</option></select></div><div><label>Kategori</label><select id="productCategoryFilter"><option value="">Tüm kategoriler</option></select></div><div><label>Stok</label><select id="productStockFilter"><option value="">Tüm stoklar</option><option value="in">Stokta var</option><option value="out">Stokta yok</option></select></div><div><label>Sıralama</label><select id="productSort"><option value="name:asc">Ürün A → Z</option><option value="name:desc">Ürün Z → A</option><option value="brand:asc">Marka A → Z</option><option value="brand:desc">Marka Z → A</option><option value="category:asc">Kategori A → Z</option><option value="category:desc">Kategori Z → A</option><option value="model:asc">Model A → Z</option><option value="model:desc">Model Z → A</option><option value="price:asc">Fiyat düşük → yüksek</option><option value="price:desc">Fiyat yüksek → düşük</option><option value="stock:asc">Stok az → çok</option><option value="stock:desc">Stok çok → az</option></select></div><div><button id="productFilterReset" class="light" type="button">Temizle</button></div><div id="productFilterCount" class="muted" style="grid-column:1/-1">0 ürün gösteriliyor</div>`;actions.insertAdjacentElement('afterend',panel);const brand=document.getElementById('productBrandFilter'),category=document.getElementById('productCategoryFilter');[...new Set(rowsData.map(p=>String(p.brand||'').trim()).filter(Boolean))].sort((a,b)=>norm(a).localeCompare(norm(b),'tr')).forEach(v=>brand.insertAdjacentHTML('beforeend',`<option value="${esc(v)}">${esc(v)}</option>`));[...new Set(rowsData.map(p=>String(p.category||'').trim()).filter(Boolean))].sort((a,b)=>norm(a).localeCompare(norm(b),'tr')).forEach(v=>category.insertAdjacentHTML('beforeend',`<option value="${esc(v)}">${esc(v)}</option>`));if(listenersReady)return;const apply=()=>{state.search=document.getElementById('productSearch').value;state.brand=brand.value;state.category=category.value;state.stock=document.getElementById('productStockFilter').value;state.sort=document.getElementById('productSort').value;renderRows();};['productSearch','productBrandFilter','productCategoryFilter','productStockFilter','productSort'].forEach(id=>document.getElementById(id).addEventListener(id==='productSearch'?'input':'change',apply));document.getElementById('productFilterReset').addEventListener('click',()=>{state.search='';state.brand='';state.category='';state.stock='';state.sort='name:asc';document.getElementById('productSearch').value='';brand.value='';category.value='';document.getElementById('productStockFilter').value='';document.getElementById('productSort').value='name:asc';renderRows();});listenersReady=true;}
 
   window.turkogluRefreshProductFilters=loadFilterData;
-  setInterval(()=>{if(document.getElementById('productRows')&&typeof user!=='undefined'&&user)loadFilterData();},5000);
-  setInterval(refreshExactProductCount,5000);
-  setInterval(autoFillImages,7000);
-  setTimeout(()=>{seed();autoFillImages();},1200);
+
+  /* Uygulama açılışında yalnızca bir kez katalog senkronizasyonu yapılır.
+     Sürekli polling kaldırıldı; bu hem Supabase sorgularını hem de Netlify maliyetini azaltır. */
+  let attempts=0;
+  const startup=setInterval(()=>{
+    attempts++;
+    if(typeof user!=='undefined'&&user&&typeof client!=='undefined'&&client){clearInterval(startup);seed();autoFillImages();setTimeout(loadFilterData,250);}
+    else if(attempts>=60)clearInterval(startup);
+  },500);
 })();

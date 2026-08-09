@@ -1,5 +1,7 @@
 /* CCTV katalog temizleme + doğrulanmış model/özellik güncellemesi. Uygulama açılışını bloke etmez. */
 (function(){
+  if(window.__turkogluCameraDetailsLoaded)return;
+  window.__turkogluCameraDetailsLoaded=true;
   const details={
     'Avenir 2MP IP Kamera':{model:'AV-IP3020-I'},'Avenir 4MP IP Kamera':{model:'AV-IP4045-IS'},'Avenir 6MP IP Kamera':{model:'AV-M21'},'Avenir 8MP IP Kamera':{model:'AV-S242X'},
     'Avenir 2MP HD Kamera':{model:'AV-DF234'},'Avenir 4MP HD Kamera':{model:'AV-DF418AHD'},
@@ -34,14 +36,18 @@
       }
       done=true;
       if(typeof loadAll==='function')await loadAll();
-      if(typeof toast==='function')toast(`${remove.length} tekrarlı kamera kaydı temizlendi.`);
+      if(typeof toast==='function'&&remove.length)toast(`${remove.length} tekrarlı kamera kaydı temizlendi.`);
     }catch(e){
       console.error('CCTV katalog temizliği:',e);
       done=true;
       if(typeof toast==='function')toast('Katalog temizliği tamamlanamadı: '+(e.message||e));
     }finally{running=false}
   }
-  const wait=setInterval(()=>{if(typeof user!=='undefined'&&user&&typeof client!=='undefined'){clearInterval(wait);setTimeout(run,3000)}},500);
-  setTimeout(()=>clearInterval(wait),30000);
+  let attempts=0;
+  const wait=setInterval(()=>{
+    attempts++;
+    if(typeof user!=='undefined'&&user&&typeof client!=='undefined'&&client){clearInterval(wait);setTimeout(run,1500);}
+    else if(attempts>=60)clearInterval(wait);
+  },500);
   window.turkogluCleanCameraCatalog=run;
 })();
