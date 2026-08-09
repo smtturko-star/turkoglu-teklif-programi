@@ -37,6 +37,17 @@ table{width:100%;border-collapse:collapse}th,td{border-bottom:1px solid var(--li
 .global-search{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:12px 0}.global-search-main{flex:1;min-width:240px;position:relative}.global-search-main input{padding-left:38px}.global-search-icon{position:absolute;left:12px;top:50%;transform:translateY(-50%);opacity:.55;font-size:18px;pointer-events:none}.global-search-count{font-size:12px;color:var(--muted);white-space:nowrap}.global-search-clear{background:#eef0f3!important;color:#111827!important;padding:8px 11px!important}
 @media(max-width:760px){.global-search-main{min-width:100%}}
 </style>
+
+<style id="turkoglu-search-css">
+.global-search{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:12px 0}
+.global-search-main{position:relative;flex:1;min-width:240px}
+.global-search-main input{padding-left:38px}
+.global-search-icon{position:absolute;left:12px;top:50%;transform:translateY(-50%);opacity:.55;pointer-events:none}
+.global-search-clear{background:#eef0f3!important;color:#111827!important}
+.global-search-count{font-size:12px;color:var(--muted);white-space:nowrap}
+@media(max-width:760px){.global-search-main{min-width:100%}}
+</style>
+
 </head>
 <body>
 <div id="loginView" class="login card">
@@ -443,6 +454,66 @@ async function saveSettings(){
   const r=company.id?await client.from('company_settings').update(o).eq('id',company.id).select().single():await client.from('company_settings').insert(o).select().single();
   if(r.error)return alert(r.error.message);company=r.data||company;toast('Firma ayarları kaydedildi.');await loadAll();
 }
+
+<script id="turkoglu-search-js">
+(function(){
+  const configs=[
+    ['customers','customerRows','Müşteri ara...'],
+    ['products','productRows','Ürün, marka, model veya kategori ara...'],
+    ['quotes','quoteRows','Teklif no, müşteri veya durum ara...'],
+    ['jobs','jobRows','Müşteri, iş veya durum ara...'],
+    ['payments','paymentRows','Müşteri, tarih, yöntem veya açıklama ara...']
+  ];
+  const norm=v=>String(v??'').toLocaleLowerCase('tr-TR');
+  function filterRows(key,tbodyId,value){
+    const q=norm(value).trim(), body=document.getElementById(tbodyId); if(!body)return;
+    let shown=0,total=0;
+    [...body.querySelectorAll('tr')].forEach(tr=>{
+      const cells=[...tr.children];
+      if(!cells.length)return;
+      const empty=cells.length===1 && /^(Müşteri|Ürün|Teklif|İş|Ödeme) yok\.?$/i.test(tr.textContent.trim());
+      if(empty){tr.style.display=q?'none':'';return;}
+      total++;
+      const ok=!q || norm(tr.textContent).includes(q);
+      tr.style.display=ok?'':'none'; if(ok)shown++;
+    });
+    const count=document.getElementById('search-count-'+key); if(count)count.textContent=q?shown+' / '+total:'Toplam '+total;
+  }
+  function addBar(sectionId,tbodyId,placeholder,key){
+    const section=document.getElementById(sectionId); if(!section)return;
+    if(section.querySelector('.global-search'))return;
+    const card=section.querySelector('.card'); if(!card)return;
+    const table=card.querySelector('table'); if(!table)return;
+    const bar=document.createElement('div'); bar.className='global-search';
+    bar.innerHTML='<div class="global-search-main"><span class="global-search-icon">🔎</span><input type="search" autocomplete="off" placeholder="'+placeholder+'"></div><span class="global-search-count" id="search-count-'+key+'">Toplam 0</span><button type="button" class="global-search-clear">Temizle</button>';
+    table.parentNode.insertBefore(bar,table);
+    const input=bar.querySelector('input');
+    input.addEventListener('input',()=>filterRows(key,tbodyId,input.value));
+    bar.querySelector('.global-search-clear').addEventListener('click',()=>{input.value='';filterRows(key,tbodyId,'');input.focus()});
+    const body=document.getElementById(tbodyId);
+    if(body)new MutationObserver(()=>filterRows(key,tbodyId,input.value)).observe(body,{childList:true});
+    filterRows(key,tbodyId,'');
+  }
+  function addQuoteProductSearch(){
+    const productsBox=document.querySelector('#modalBox .products'); if(!productsBox || productsBox.previousElementSibling?.dataset?.quoteSearch==='1')return;
+    const wrap=document.createElement('div'); wrap.dataset.quoteSearch='1'; wrap.className='global-search';
+    wrap.innerHTML='<div class="global-search-main"><span class="global-search-icon">🔎</span><input type="search" autocomplete="off" placeholder="Teklif için ürün ara..."></div><button type="button" class="global-search-clear">Temizle</button>';
+    productsBox.parentNode.insertBefore(wrap,productsBox);
+    const input=wrap.querySelector('input');
+    const apply=()=>{const q=norm(input.value).trim();productsBox.querySelectorAll('.p').forEach(card=>card.style.display=(!q||norm(card.textContent).includes(q))?'':'none')};
+    input.addEventListener('input',apply);
+    wrap.querySelector('.global-search-clear').addEventListener('click',()=>{input.value='';apply();input.focus()});
+  }
+  function init(){
+    configs.forEach(c=>addBar(c[0],c[1],c[2],c[0]));
+    addQuoteProductSearch();
+    const modal=document.getElementById('modalBox');
+    if(modal)new MutationObserver(addQuoteProductSearch).observe(modal,{childList:true,subtree:true});
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
+})();
+</script>
+
 start();
 
 </script>
