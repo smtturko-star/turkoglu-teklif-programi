@@ -63,7 +63,7 @@ table{width:100%;border-collapse:collapse}th,td{border-bottom:1px solid var(--li
 <label>E-posta</label><input id="email" type="email">
 <label style="margin-top:10px">Şifre</label><input id="password" type="password">
 <div class="actions" style="margin-top:12px"><button class="green" onclick="login()">Giriş Yap</button><button class="light" onclick="signup()">Yeni Hesap</button></div>
-<p id="authMsg" class="muted"></p>
+<p id="authMsg" class="muted"></p><p class="muted" style="margin-top:8px">Bu cihazda giriş yaptıktan sonra oturum açık kalır. Çıkış yapmadığınız sürece tekrar şifre istenmez.</p>
 </div>
 </div>
 
@@ -133,6 +133,7 @@ const today=()=>new Date().toISOString().slice(0,10);
 const cfgKey=(name)=>String(name||'').replace(/[^a-zA-Z0-9._-]/g,'_').slice(0,120);
 
 function getCfg(){try{return JSON.parse(localStorage.getItem(SBKEY)||'{}')}catch{return {}}}
+function restoreLastEmail(){try{const e=localStorage.getItem('turkoglu_last_email');if(e&&$('email'))$('email').value=e}catch{}}
 function saveConfig(){
   const u=$('cfgUrl')?.value.trim(), k=$('cfgKey')?.value.trim();
   if(!/^https:\/\/[a-z0-9-]+\.supabase\.co\/?$/.test(u||'')) return alert('Geçerli Supabase Project URL girin.');
@@ -150,16 +151,18 @@ function initClient(){
     client=window.supabase.createClient(c.u.trim(),c.k.trim(),{
       auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}
     });
-    $('setupBox').classList.add('hidden');$('authBox').classList.remove('hidden');
+    $('setupBox').classList.add('hidden');$('authBox').classList.remove('hidden');restoreLastEmail();
     return true;
   }catch(e){alert('Supabase başlatılamadı: '+err(e));return false}
 }
+/* TURKOGLU_DEVICE_LOGIN_PATCH */
 async function login(){
   const e=$('email')?.value.trim(),p=$('password')?.value||'';
   if(!e||!p)return $('authMsg').textContent='E-posta ve şifre gerekli.';
   $('authMsg').textContent='Giriş yapılıyor...';
   const r=await client.auth.signInWithPassword({email:e,password:p});
   if(r.error)$('authMsg').textContent=r.error.message;
+  else localStorage.setItem('turkoglu_last_email',e);
 }
 async function signup(){
   const e=$('email')?.value.trim(),p=$('password')?.value||'';
