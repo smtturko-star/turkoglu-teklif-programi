@@ -1,64 +1,12 @@
 name: Enhance application UI
+
+# Disabled: this workflow rewrote index.html automatically and could override
+# the known-good application state.
 on:
-  push:
-    branches: [main]
-permissions:
-  contents: write
+  workflow_dispatch:
+
 jobs:
-  enhance:
-    if: github.actor != 'github-actions[bot]'
+  disabled:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - name: Add professional product search and quote product search
-        shell: python
-        run: |
-          from pathlib import Path
-          p=Path('index.html')
-          s=p.read_text(encoding='utf-8')
-          marker='<!-- TURKOGLU_ENHANCEMENTS -->'
-          if marker in s:
-              print('Enhancements already installed')
-              raise SystemExit(0)
-          css=r'''\n<style id="turkoglu-enhancements">\n.searchbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:12px 0}.searchbar .search-main{flex:1;min-width:220px;position:relative}.searchbar input{padding-left:38px}.search-icon{position:absolute;left:12px;top:50%;transform:translateY(-50%);opacity:.55;font-size:18px}.searchbar select{width:auto;min-width:150px}.searchbar .count{font-size:12px;color:var(--muted);white-space:nowrap}.product-empty{padding:28px;text-align:center;border:1px dashed var(--line);border-radius:10px;color:var(--muted);grid-column:1/-1}.product-card-search{display:grid;grid-template-columns:72px 1fr;gap:10px;align-items:center;background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px;cursor:pointer}.product-card-search:hover{border-color:#111827;box-shadow:0 3px 12px #00000012}.product-card-search img{width:72px;height:72px;object-fit:contain;border:1px solid var(--line);border-radius:8px}.product-card-search .price{font-weight:900;margin-top:4px}.quick-add{font-size:11px;margin-top:5px;color:var(--green);font-weight:800}.filter-pill{background:#eef0f3;color:#374151;border-radius:999px;padding:5px 9px;font-size:11px;font-weight:700}\n@media(max-width:760px){.searchbar .search-main{min-width:100%}.searchbar select{width:100%}}\n</style>\n'''
-          s=s.replace('</head>',css+'</head>',1)
-          old='<section id="products" class="page"><div class="card"><div class="actions"><h2 style="margin-right:auto">Ürünler</h2><button class="green" onclick="productModal()">+ Ürün</button></div><p class="muted">Gerçek ürün fotoğrafını telefondan da yükleyebilirsiniz.</p>'
-          new='<section id="products" class="page"><div class="card"><div class="actions"><h2 style="margin-right:auto">Ürünler</h2><button class="green" onclick="productModal()">+ Ürün</button></div><p class="muted">Gerçek ürün fotoğrafını telefondan da yükleyebilirsiniz.</p><div id="productSearchHost"></div>'
-          if old not in s: raise SystemExit('Products section marker not found')
-          s=s.replace(old,new,1)
-          enhancement=r'''\n<!-- TURKOGLU_ENHANCEMENTS -->\n<script>\n(function(){\n  let productSearch='', productCategory='', productBrand='', productStockOnly=false;\n  function uniq(arr){return [...new Set(arr.filter(Boolean))].sort((a,b)=>String(a).localeCompare(String(b),'tr'))}\n  function ensureProductSearch(){\n    const host=document.getElementById('productSearchHost');\n    if(!host) return;\n    const cats=uniq(products.map(p=>p.category));\n    const brands=uniq(products.map(p=>p.brand));\n    host.innerHTML=`<div class="searchbar"><div class="search-main"><span class="search-icon">⌕</span><input id="productSearch" placeholder="Ürün adı, marka, model veya kategori ara..." value="${esc(productSearch)}" autocomplete="off"></div><select id="productCategory"><option value="">Tüm kategoriler</option>${cats.map(x=>`<option ${x===productCategory?'selected':''} value="${esc(x)}">${esc(x)}</option>`).join('')}</select><select id="productBrand"><option value="">Tüm markalar</option>${brands.map(x=>`<option ${x===productBrand?'selected':''} value="${esc(x)}">${esc(x)}</option>`).join('')}</select><label class="filter-pill"><input id="productStockOnly" type="checkbox" ${productStockOnly?'checked':''} style="width:auto;margin-right:5px"> Sadece stokta</label><span id="productResultCount" class="count"></span></div>`;
-    document.getElementById('productSearch').oninput=e=>{productSearch=e.target.value;renderProducts();};
-    document.getElementById('productCategory').onchange=e=>{productCategory=e.target.value;renderProducts();};
-    document.getElementById('productBrand').onchange=e=>{productBrand=e.target.value;renderProducts();};
-    document.getElementById('productStockOnly').onchange=e=>{productStockOnly=e.target.checked;renderProducts();};
-  }
-  window.renderProducts=function(){
-    ensureProductSearch();
-    const q=productSearch.trim().toLocaleLowerCase('tr-TR');
-    const filtered=products.filter(p=>{const hay=[p.name,p.brand,p.model,p.category,p.description].map(x=>String(x||'').toLocaleLowerCase('tr-TR')).join(' ');return (!q||hay.includes(q))&&(!productCategory||p.category===productCategory)&&(!productBrand||p.brand===productBrand)&&(!productStockOnly||Number(p.stock||0)>0);});
-    const count=document.getElementById('productResultCount');if(count)count.textContent=`${filtered.length} / ${products.length} ürün`;
-    $('productRows').innerHTML=filtered.map(p=>`<tr><td>${p.image_url?`<img class="thumb" src="${esc(p.image_url)}" alt="${esc(p.name)}">`:'-'}</td><td><b>${esc(p.name)}</b><br>${esc(p.brand)}</td><td>${esc(p.model)}</td><td>${esc(p.category)}</td><td>${money(p.sale_price)}</td><td>%${num(p.vat_rate)}</td><td><div class="rowactions"><button onclick="productModal('${p.id}')">Düzenle</button><button class="red" onclick="deleteProduct('${p.id}')">Sil</button></div></td></tr>`).join('')||'<tr><td colspan="7"><div class="product-empty">Aradığınız kriterlere uygun ürün bulunamadı.</div></td></tr>';
-  };
-  const originalQuoteEditor=window.quoteEditor;
-  window.quoteEditor=function(){
-    originalQuoteEditor();
-    const h3=[...document.querySelectorAll('#modalBox h3')].find(x=>x.textContent.includes('Ürünler'));if(!h3)return;
-    const host=document.createElement('div');host.className='searchbar';host.innerHTML=`<div class="search-main"><span class="search-icon">⌕</span><input id="quoteProductSearch" placeholder="Teklif için ürün ara: ad, marka veya model..." autocomplete="off"></div><span id="quoteProductCount" class="count"></span>`;
-    h3.insertAdjacentElement('afterend',host);const grid=h3.nextElementSibling;
-    function draw(){const q=(document.getElementById('quoteProductSearch')?.value||'').trim().toLocaleLowerCase('tr-TR');const matches=products.filter(p=>{const hay=[p.name,p.brand,p.model,p.category].map(x=>String(x||'').toLocaleLowerCase('tr-TR')).join(' ');return !q||hay.includes(q)});document.getElementById('quoteProductCount').textContent=`${matches.length} ürün`;grid.innerHTML=matches.map(p=>`<div class="product-card-search" onclick="addQuoteItem('${p.id}')">${p.image_url?`<img src="${esc(p.image_url)}" alt="">`:'<div style="width:72px;height:72px;border:1px dashed var(--line);border-radius:8px;display:grid;place-items:center">📦</div>'}<div><b>${esc(p.name)}</b><br><span class="muted">${esc(p.brand)} ${esc(p.model)}</span><div class="price">${money(p.sale_price)}</div><div class="quick-add">+ Teklife ekle</div></div></div>`).join('')||'<div class="product-empty">Ürün bulunamadı.</div>';}
-    document.getElementById('quoteProductSearch').oninput=draw;draw();
-  };
-  const oldLoadAll=window.loadAll;window.loadAll=async function(){const r=await oldLoadAll();setTimeout(()=>ensureProductSearch(),0);return r};
-  const oldPage=window.page;window.page=function(id){oldPage(id);if(id==='products')setTimeout(ensureProductSearch,0)};
-})();
-</script>\n'''
-          s=s.replace('start();',enhancement+'\nstart();',1)
-          p.write_text(s,encoding='utf-8')
-      - name: Commit enhancement
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add index.html
-          git diff --cached --quiet || git commit -m "Add professional product search and quote product search"
-          git push
-      # trigger-check
+      - run: echo "Disabled to protect the production index.html"
