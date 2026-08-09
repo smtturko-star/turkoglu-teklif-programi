@@ -8,7 +8,7 @@ const url = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || 'https:
 const key = process.env.SUPABASE_PUBLISHABLE_KEY || process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_PUBLISHABLE_KEY || process.env.VITE_SUPABASE_ANON_KEY || process.env.PUBLIC_SUPABASE_ANON_KEY || 'sb_publishable_nEC12IhKYJwv2IfSRoVbmw_u-rFe3Cn';
 const cfg = { u: url.replace(/\/$/, ''), k: key };
 
-// Use the installed package locally, with a CDN fallback if the local bundle is unavailable.
+// Use the installed package locally. Keep a CDN fallback for unusual build/runtime failures.
 const umd = 'node_modules/@supabase/supabase-js/dist/umd/supabase.js';
 if (!fs.existsSync(umd)) throw new Error('Supabase JS paketi bulunamadı.');
 fs.copyFileSync(umd, 'supabase.js');
@@ -21,11 +21,13 @@ html = html.replace('<div id="authBox" class="hidden">', '<div id="authBox">');
 const configScript = `<script>window.__TURKOGLU_SB_CONFIG=${JSON.stringify(cfg)};</script>`;
 html = html.replace('</head>', `${configScript}</head>`);
 
-// Prefer saved config if the user explicitly saved it; otherwise use the build-time config.
+// Prefer an explicitly saved public config; otherwise use the build-time config.
 html = html.replace(/function getCfg\(\)\{[^}]*\}function saveConfig\(\)/, `function getCfg(){try{const s=JSON.parse(localStorage.getItem(SBKEY)||'{}');return s.u&&s.k?s:window.__TURKOGLU_SB_CONFIG||{}}catch{return window.__TURKOGLU_SB_CONFIG||{}}}function saveConfig()`);
 
-// Make initialization fail visibly and provide the remembered values instead of silently doing nothing.
-html = html.replace(/function initClient\(\)\{[^}]*\}/, `function initClient(){const c=getCfg();if($('cfgUrl'))$('cfgUrl').value=c.u||'';if($('cfgKey'))$('cfgKey').value=c.k||'';if(!c.u||!c.k){$('setupBox').classList.remove('hidden');$('authBox').classList.add('hidden');return false}if(!window.supabase){$('setupBox').classList.remove('hidden');$('authBox').classList.add('hidden');$('authMsg').textContent='Supabase bağlantı kütüphanesi yüklenemedi. Bilgileriniz hatırlandı; tekrar deneyebilirsiniz.';return false}try{client=window.supabase.createClient(c.u,c.k,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}})}catch(e){$('setupBox').classList.remove('hidden');$('authBox').classList.add('hidden');$('authMsg').textContent='Supabase bağlantısı kurulamadı: '+err(e);return false}$('setupBox').classList.add('hidden');$('authBox').classList.remove('hidden');return true}`);
+// Robustly initialize the Supabase client. The browser must never be asked for a secret key.
+const boot = `async function initClient(){const c=getCfg();if($('cfgUrl'))$('cfgUrl').value=c.u||'';if($('cfgKey'))$('cfgKey').value=c.k||'';if(!c.u||!c.k){$('setupBox').classList.remove('hidden');$('authBox').classList.add('hidden');return false}let sdk=globalThis.supabase;if(!sdk||typeof sdk.createClient!=='function'){try{await new Promise((resolve,reject)=>{const s=document.createElement('script');s.src='./supabase.js';s.onload=resolve;s.onerror=reject;document.head.appendChild(s)})}catch(e){try{await new Promise((resolve,reject)=>{const s=document.createElement('script');s.src=${JSON.stringify(remote)};s.onload=resolve;s.onerror=reject;document.head.appendChild(s)})}catch(e2){$('setupBox').classList.remove('hidden');$('authBox').classList.add('hidden');$('authMsg').textContent='Supabase bağlantı kütüphanesi yüklenemedi. URL ve anahtar hatırlandı.';return false}}sdk=globalThis.supabase}if(!sdk||typeof sdk.createClient!=='function'){$('setupBox').classList.remove('hidden');$('authBox').classList.add('hidden');$('authMsg').textContent='Supabase istemcisi yüklenemedi. URL ve anahtar hatırlandı.';return false}try{client=sdk.createClient(c.u,c.k,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}})}catch(e){$('setupBox').classList.remove('hidden');$('authBox').classList.add('hidden');$('authMsg').textContent='Supabase bağlantısı kurulamadı: '+err(e);return false}$('setupBox').classList.add('hidden');$('authBox').classList.remove('hidden');return true}`;
+html = html.replace(/function initClient\(\)[\s\S]*?\}\s*async function login/, `${boot}async function login`);
+html = html.replace(/async function start\(\)\{if\(!initClient\(\)\)return;/, `async function start(){if(!(await initClient()))return;`);
 
 fs.writeFileSync(file, html, 'utf8');
-console.log('Supabase yerel bundle, CDN fallback ve hatırlanan public bağlantı etkin.');
+console.log('Supabase istemci başlangıcı düzeltildi; public bağlantı bilgileri otomatik ve hatırlanan şekilde etkin.');
