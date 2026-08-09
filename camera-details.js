@@ -66,7 +66,50 @@
   /* Görsel tema: mevcut uygulama mantığına dokunmadan yalnızca görünümü iyileştirir. */
   function loadProfessionalTheme(){
     if(document.getElementById('turkogluProfessionalTheme'))return;
-    const link=document.createElement('link');link.id='turkogluProfessionalTheme';link.rel='stylesheet';link.href='./theme.css?v=1';document.head.appendChild(link);
+    const link=document.createElement('link');link.id='turkogluProfessionalTheme';link.rel='stylesheet';link.href='./theme.css?v=2';document.head.appendChild(link);
   }
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',loadProfessionalTheme,{once:true});else loadProfessionalTheme();
+
+  /* Kurumsal kimlik: site başlığı + Instagram + teklif çıktısı. */
+  function addCorporateBranding(){
+    const INSTAGRAM='https://www.instagram.com/turkogluguvenlik38/';
+    const COMPANY='TÜRKOĞLU ELEKTRİK ELEKTRONİK';
+    const logoSvg='data:image/svg+xml;charset=UTF-8,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#10243f"/><stop offset="1" stop-color="#0f9f95"/></linearGradient></defs><rect width="96" height="96" rx="22" fill="url(#g)"/><path d="M22 54c0-18 12-30 29-30 10 0 18 4 23 11l-9 8c-4-5-8-7-14-7-9 0-15 7-15 18s6 18 15 18c6 0 11-3 15-8l9 8c-6 8-14 12-24 12-17 0-29-12-29-30z" fill="#fff"/></svg>');
+    const top=document.querySelector('.top');
+    if(top&&!top.querySelector('.corporate-brand')){
+      const brand=top.querySelector('.brand');
+      if(brand){brand.classList.add('corporate-brand');brand.innerHTML='<img class="corporate-logo" src="'+logoSvg+'" alt="Türkoğlu Elektrik Elektronik"><span><strong>'+COMPANY+'</strong><small>CCTV Teklif & İş Takip</small></span>';}
+      const actions=document.createElement('div');actions.className='corporate-actions';
+      actions.innerHTML='<a class="instagram-link" href="'+INSTAGRAM+'" target="_blank" rel="noopener noreferrer" aria-label="Instagram şirket hesabı"><span>◎</span><b>@turkogluguvenlik38</b></a>';
+      const logout=top.querySelector('button[onclick="logout()"]');if(logout)top.insertBefore(actions,logout);else top.appendChild(actions);
+    }
+
+    const login=document.getElementById('loginView');
+    if(login&&!login.querySelector('.login-social')){
+      const social=document.createElement('a');social.className='login-social';social.href=INSTAGRAM;social.target='_blank';social.rel='noopener noreferrer';social.innerHTML='◎  @turkogluguvenlik38';login.appendChild(social);
+    }
+
+    const print=document.getElementById('printPage');
+    if(print&&!print.querySelector('.quote-corporate')){
+      const box=print.querySelector('.print')||print;
+      const head=box.querySelector('.qhead');
+      if(head){
+        const existingLogo=head.querySelector('.qlogo');
+        if(existingLogo){existingLogo.src=logoSvg;existingLogo.alt=COMPANY;existingLogo.classList.add('quote-logo');}
+        const info=document.createElement('div');info.className='quote-corporate';info.innerHTML='<div class="quote-company">'+COMPANY+'</div><div>CCTV • Güvenlik Sistemleri • Elektrik & Elektronik</div><a href="'+INSTAGRAM+'" target="_blank" rel="noopener noreferrer">Instagram: @turkogluguvenlik38</a>';
+        head.insertBefore(info,head.firstChild);
+      }
+      const footer=document.createElement('div');footer.className='quote-footer';footer.innerHTML='<strong>'+COMPANY+'</strong><span>Instagram: @turkogluguvenlik38</span><span>Güvenlik sistemleri ve elektrik çözümleri</span>';
+      box.appendChild(footer);
+    }
+  }
+
+  function watchCorporateBranding(){
+    addCorporateBranding();
+    const observer=new MutationObserver(()=>addCorporateBranding());
+    observer.observe(document.body,{childList:true,subtree:true});
+    window.addEventListener('beforeprint',addCorporateBranding);
+  }
+
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>{loadProfessionalTheme();watchCorporateBranding()},{once:true});
+  else{loadProfessionalTheme();watchCorporateBranding();}
 })();
