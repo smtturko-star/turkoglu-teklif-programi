@@ -1,8 +1,8 @@
-/* Türkoğlu CCTV kamera kataloğu v3 - aktif uygulama oturumu üzerinden eksik ürünleri ekler. */
+/* Türkoğlu CCTV kamera kataloğu v4 - aktif uygulama oturumu üzerinden eksik ürünleri ekler. */
 (function(){
   const catalog=[];
   const ipBrands=['Avenir','HiLook','Hikvision','Dahua'];
-  const hdBrands=['Hikvision','Dahua'];
+  const hdBrands=['Avenir','Hikvision','Dahua'];
   [...ipBrands.flatMap(brand=>[2,4,6,8].map(mp=>({brand,category:'IP Kamera',mp}))),...hdBrands.flatMap(brand=>[2,4,6,8].map(mp=>({brand,category:'HD Kamera',mp})))].forEach(x=>catalog.push({
     name:`${x.brand} ${x.mp}MP ${x.category}`,
     brand:x.brand,
