@@ -1,0 +1,41 @@
+name: Inject camera catalog
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  inject:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Inject catalog script into index.html
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+          marker='camera-catalog.js'
+          if marker not in s:
+              needle='</body>'
+              if needle not in s:
+                  raise SystemExit('index.html içinde </body> bulunamadı')
+              s=s.replace(needle, '<script src="./camera-catalog.js"></script>\n'+needle, 1)
+              p.write_text(s, encoding='utf-8')
+          PY
+      - name: Commit injected index
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          if git diff --cached --quiet; then
+            echo "No injection needed"
+          else
+            git commit -m "Kamera kataloğu scriptini index.html içine bağla"
+            git push
+          fi
