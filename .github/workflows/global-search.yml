@@ -1,34 +1,123 @@
-name: Add global search bars
+name: Install stable search bars
 on:
   push:
     branches: [main]
 permissions:
   contents: write
 jobs:
-  search:
+  install-search:
     if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Add search UI
+      - name: Clean broken search injection and install stable search UI
         shell: python
         run: |
           from pathlib import Path
-          p=Path('index.html')
-          s=p.read_text(encoding='utf-8')
-          marker='<!-- TURKOGLU_GLOBAL_SEARCH_V1 -->'
-          if marker in s:
-              print('Global search already installed')
-              raise SystemExit(0)
-          css='''\n<style id="turkoglu-global-search">\n.global-search{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:12px 0}.global-search-main{flex:1;min-width:240px;position:relative}.global-search-main input{padding-left:38px}.global-search-icon{position:absolute;left:12px;top:50%;transform:translateY(-50%);opacity:.55;font-size:18px;pointer-events:none}.global-search-count{font-size:12px;color:var(--muted);white-space:nowrap}.global-search-clear{background:#eef0f3!important;color:#111827!important;padding:8px 11px!important}\n@media(max-width:760px){.global-search-main{min-width:100%}}\n</style>\n'''
-          s=s.replace('</head>',css+'</head>',1)
-          script=r'''\n<!-- TURKOGLU_GLOBAL_SEARCH_V1 -->\n<script>\n(function(){\n  const state={customers:'',products:'',quotes:'',jobs:'',payments:'',quoteProducts:''};\n  const lower=v=>String(v??'').toLocaleLowerCase('tr-TR');\n  const addBar=(sectionId,hostId,placeholder,key)=>{\n    const host=document.getElementById(hostId); if(!host)return;\n    host.innerHTML=`<div class="global-search"><div class="global-search-main"><span class="global-search-icon">⌕</span><input id="${hostId}Input" type="search" placeholder="${placeholder}" value="${esc(state[key])}" autocomplete="off"></div><button type="button" class="global-search-clear" onclick="window.__clearGlobalSearch('${key}')">Temizle</button><span id="${hostId}Count" class="global-search-count"></span></div>`;\n    document.getElementById(hostId+'Input').oninput=e=>{state[key]=e.target.value;window.__rerenderSearch(key)};\n  };\n  window.__clearGlobalSearch=key=>{state[key]='';window.__rerenderSearch(key)};\n  function ensureBars(){\n    const specs=[\n      ['customers','customerSearchHost','Müşteri, yetkili, telefon, e-posta veya adres ara...','customers'],\n      ['products','productSearchHost2','Ürün adı, marka, model veya kategori ara...','products'],\n      ['quotes','quoteSearchHost','Teklif no, müşteri veya durum ara...','quotes'],\n      ['jobs','jobSearchHost','Müşteri, iş/proje veya durum ara...','jobs'],\n      ['payments','paymentSearchHost','Müşteri, tarih, yöntem veya açıklama ara...','payments']\n    ];\n    specs.forEach(([sec,host,ph,key])=>addBar(sec,host,ph,key));\n  }\n  function count(id,n,total){const x=document.getElementById(id);if(x)x.textContent=`${n} / ${total}`;}\n  const originalCustomers=window.renderCustomers;\n  const originalProducts=window.renderProducts;\n  const originalQuotes=window.renderQuotes;\n  const originalJobs=window.renderJobs;\n  const originalPayments=window.renderPayments;\n  window.renderCustomers=function(){\n    ensureBars(); const q=lower(state.customers).trim(); const a=customers.filter(c=>!q||[c.company_name,c.contact_person,c.phone,c.whatsapp,c.email,c.tax_number,c.address,c.notes].some(v=>lower(v).includes(q)));\n    $('customerRows').innerHTML=a.map(c=>`<tr><td><b>${esc(c.company_name)}</b></td><td>${esc(c.contact_person)}</td><td>${esc(c.phone)}</td><td>${esc(c.address)}</td><td><div class="rowactions"><button onclick="customerModal('${c.id}')">Düzenle</button><button class="red" onclick="deleteCustomer('${c.id}')">Sil</button></div></td></tr>`).join('')||'<tr><td colspan="5">Aramaya uygun müşteri bulunamadı.</td></tr>';\n    count('customerSearchHostCount',a.length,customers.length);\n  };\n  window.renderProducts=function(){\n    ensureBars(); const q=lower(state.products).trim(); const a=products.filter(p=>!q||[p.name,p.brand,p.model,p.category,p.description].some(v=>lower(v).includes(q)));\n    $('productRows').innerHTML=a.map(p=>`<tr><td>${p.image_url?`<img class="thumb" src="${esc(p.image_url)}" alt="${esc(p.name)}">`:'-'}</td><td><b>${esc(p.name)}</b><br>${esc(p.brand)}</td><td>${esc(p.model)}</td><td>${esc(p.category)}</td><td>${money(p.sale_price)}</td><td>%${num(p.vat_rate)}</td><td><div class="rowactions"><button onclick="productModal('${p.id}')">Düzenle</button><button class="red" onclick="deleteProduct('${p.id}')">Sil</button></div></td></tr>`).join('')||'<tr><td colspan="7">Aramaya uygun ürün bulunamadı.</td></tr>';\n    count('productSearchHost2Count',a.length,products.length);\n  };\n  window.renderQuotes=function(){\n    ensureBars(); const q=lower(state.quotes).trim(); const a=quotes.filter(x=>!q||[x.quote_number,x.quote_date,x.status,x.customers?.company_name,x.customers?.contact_person].some(v=>lower(v).includes(q)));\n    $('quoteRows').innerHTML=a.map(x=>`<tr><td>${esc(x.quote_number)}</td><td>${esc(x.quote_date)}</td><td>${esc(x.customers?.company_name)}</td><td>${esc(x.status)}</td><td>${money(x.grand_total)}</td><td><div class="rowactions"><button onclick="openQuote('${x.id}',false)">Aç</button><button onclick="openQuote('${x.id}',true)">PDF</button><button class="red" onclick="deleteQuote('${x.id}')">Sil</button></div></td></tr>`).join('')||'<tr><td colspan="6">Aramaya uygun teklif bulunamadı.</td></tr>';\n    count('quoteSearchHostCount',a.length,quotes.length);\n  };\n  window.renderJobs=function(){\n    ensureBars(); const q=lower(state.jobs).trim(); const a=jobs.filter(x=>!q||[x.job_title,x.status,x.planned_installation_date,x.address,x.notes,x.customers?.company_name].some(v=>lower(v).includes(q)));\n    $('jobRows').innerHTML=a.map(x=>`<tr><td>${esc(x.customers?.company_name)}</td><td>${esc(x.job_title)}</td><td>${esc(x.status)}</td><td>${esc(x.planned_installation_date||'-')}</td><td>${money(x.remaining_amount)}</td><td><div class="rowactions"><button onclick="jobModal('${x.id}')">Düzenle</button><button class="red" onclick="deleteJob('${x.id}')">Sil</button></div></td></tr>`).join('')||'<tr><td colspan="6">Aramaya uygun iş bulunamadı.</td></tr>';\n    count('jobSearchHostCount',a.length,jobs.length);\n  };\n  window.renderPayments=function(){\n    ensureBars(); const q=lower(state.payments).trim(); const a=payments.filter(x=>!q||[x.payment_date,x.payment_method,x.description,x.customers?.company_name].some(v=>lower(v).includes(q)));\n    $('paymentRows').innerHTML=a.map(x=>`<tr><td>${esc(x.payment_date)}</td><td>${esc(x.customers?.company_name)}</td><td>${money(x.amount)}</td><td>${esc(x.payment_method)}</td><td>${esc(x.description)}</td><td><button class="red" onclick="deletePayment('${x.id}')">Sil</button></td></tr>`).join('')||'<tr><td colspan="6">Aramaya uygun ödeme bulunamadı.</td></tr>';\n    count('paymentSearchHostCount',a.length,payments.length);\n  };\n  window.__rerenderSearch=key=>{\n    if(key==='customers')renderCustomers();\n    if(key==='products')renderProducts();\n    if(key==='quotes')renderQuotes();\n    if(key==='jobs')renderJobs();\n    if(key==='payments')renderPayments();\n    if(key==='quoteProducts')renderQuoteProducts();\n  };\n  function renderQuoteProducts(){\n    const grid=document.getElementById('quoteProductGrid');if(!grid)return;\n    const q=lower(state.quoteProducts).trim();\n    const a=products.filter(p=>!q||[p.name,p.brand,p.model,p.category,p.description].some(v=>lower(v).includes(q)));\n    grid.innerHTML=a.map(p=>`<div class="p" onclick="addQuoteItem('${p.id}')">${p.image_url?`<img src="${esc(p.image_url)}" alt="">`:''}<div><b>${esc(p.name)}</b><br><span>${esc(p.brand)} ${esc(p.model)}</span><br><strong>${money(p.sale_price)} + KDV %${num(p.vat_rate)||20}</strong></div></div>`).join('')||'<p>Aramaya uygun ürün bulunamadı.</p>';\n    count('quoteProductSearchHostCount',a.length,products.length);\n  }\n  const oldQuoteEditor=window.quoteEditor;\n  window.quoteEditor=function(){\n    oldQuoteEditor();\n    const h3=[...document.querySelectorAll('#modalBox h3')].find(x=>x.textContent.includes('Ürünler'));\n    if(!h3)return;\n    const oldGrid=h3.nextElementSibling; if(!oldGrid)return;\n    oldGrid.id='quoteProductGrid';\n    const host=document.createElement('div');host.id='quoteProductSearchHost';host.innerHTML=`<div class="global-search"><div class="global-search-main"><span class="global-search-icon">⌕</span><input id="quoteProductSearchInput" type="search" placeholder="Teklif için ürün ara: ad, marka, model veya kategori..." autocomplete="off"></div><button type="button" class="global-search-clear" onclick="window.__clearGlobalSearch('quoteProducts')">Temizle</button><span id="quoteProductSearchHostCount" class="global-search-count"></span></div>`;\n    h3.insertAdjacentElement('afterend',host);\n    document.getElementById('quoteProductSearchInput').oninput=e=>{state.quoteProducts=e.target.value;renderQuoteProducts()};\n    renderQuoteProducts();\n  };\n  function installHosts(){\n    const map=[['customers','customerSearchHost'],['products','productSearchHost2'],['quotes','quoteSearchHost'],['jobs','jobSearchHost'],['payments','paymentSearchHost']];\n    map.forEach(([sec,id])=>{const section=document.getElementById(sec);if(section&&!document.getElementById(id)){const card=section.querySelector('.card');const table=card?.querySelector('table');if(table){const host=document.createElement('div');host.id=id;table.parentElement.insertBefore(host,table);}}});\n  }\n  const oldPage=window.page;\n  window.page=function(id){oldPage(id);if(['customers','products','quotes','jobs','payments'].includes(id)){installHosts();window.__rerenderSearch(id)}};\n  const oldRender=window.render;\n  window.render=function(){installHosts();oldRender();setTimeout(ensureBars,0)};\n  installHosts();\n})();\n</script>\n'''
-          s=s.replace('</body>',script+'</body>',1)
-          p.write_text(s,encoding='utf-8')
-      - name: Commit search changes
+          import re
+
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+
+          # Remove previous search injections that could print literal text or override app functions.
+          s = re.sub(r'<style id="turkoglu-global-search">.*?</style>\s*', '', s, flags=re.S)
+          s = re.sub(r'<style id="turkoglu-search-css">.*?</style>\s*', '', s, flags=re.S)
+          s = re.sub(r'\s*<!-- TURKOGLU_GLOBAL_SEARCH_V1 -->\s*<script>.*?</script>\s*', '\n', s, flags=re.S)
+          s = re.sub(r'<style id="turkoglu-stable-search">.*?</style>\s*', '', s, flags=re.S)
+          s = re.sub(r'<script id="turkoglu-stable-search-js">.*?</script>\s*', '', s, flags=re.S)
+
+          # Remove only malformed trailing material that appeared after the real HTML document.
+          end = s.lower().rfind('</html>')
+          if end != -1:
+              s = s[:end+7]
+
+          css = '''
+<style id="turkoglu-stable-search">
+.searchbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:12px 0}.searchbar-main{position:relative;flex:1;min-width:240px}.searchbar-main input{padding-left:38px}.searchbar-icon{position:absolute;left:12px;top:50%;transform:translateY(-50%);opacity:.55;font-size:18px;pointer-events:none}.searchbar-count{font-size:12px;color:var(--muted);white-space:nowrap}.searchbar-clear{background:#eef0f3!important;color:#111827!important;padding:8px 11px!important}@media(max-width:760px){.searchbar-main{min-width:100%}}
+</style>
+'''
+          s = s.replace('</head>', css + '</head>', 1)
+
+          hosts = {
+            'customers': ('customerSearchHost', 'customerRows', 'Müşteri, yetkili, telefon, e-posta veya adres ara...'),
+            'products': ('productSearchHost', 'productRows', 'Ürün adı, marka, model veya kategori ara...'),
+            'quotes': ('quoteSearchHost', 'quoteRows', 'Teklif no, müşteri veya durum ara...'),
+            'jobs': ('jobSearchHost', 'jobRows', 'Müşteri, iş/proje veya durum ara...'),
+            'payments': ('paymentSearchHost', 'paymentRows', 'Müşteri, tarih, yöntem veya açıklama ara...'),
+          }
+
+          for section_id, (host_id, tbody_id, placeholder) in hosts.items():
+              marker = f'<section id="{section_id}"'
+              pos = s.find(marker)
+              if pos == -1 or f'id="{host_id}"' in s[pos:s.find('</section>', pos)+10]:
+                  continue
+              table_pos = s.find('<table', pos)
+              if table_pos == -1:
+                  continue
+              host = f'<div id="{host_id}" class="search-host" data-tbody="{tbody_id}" data-placeholder="{placeholder}"></div>\n'
+              s = s[:table_pos] + host + s[table_pos:]
+
+          js = '''
+<script id="turkoglu-stable-search-js">
+(function(){
+  const cfg=[
+    {host:'customerSearchHost',body:'customerRows',ph:'Müşteri, yetkili, telefon, e-posta veya adres ara...'},
+    {host:'productSearchHost',body:'productRows',ph:'Ürün adı, marka, model veya kategori ara...'},
+    {host:'quoteSearchHost',body:'quoteRows',ph:'Teklif no, müşteri veya durum ara...'},
+    {host:'jobSearchHost',body:'jobRows',ph:'Müşteri, iş/proje veya durum ara...'},
+    {host:'paymentSearchHost',body:'paymentRows',ph:'Müşteri, tarih, yöntem veya açıklama ara...'}
+  ];
+  const norm=v=>String(v||'').toLocaleLowerCase('tr-TR').trim();
+  const realRows=body=>[...body.querySelectorAll('tr')].filter(r=>{const t=norm(r.textContent);return t&&t!=='iş yok.'&&t!=='ürün yok.'&&t!=='müşteri yok.'&&t!=='teklif yok.'&&t!=='ödeme yok.'});
+  const apply=c=>{
+    const host=document.getElementById(c.host),body=document.getElementById(c.body); if(!host||!body)return;
+    const input=host.querySelector('input'); if(!input)return;
+    const q=norm(input.value),rows=[...body.querySelectorAll('tr')],valid=realRows(body); let shown=0;
+    rows.forEach(r=>{const ok=!q||norm(r.textContent).includes(q);r.style.display=ok?'':'none';if(ok&&valid.includes(r))shown++});
+    const count=host.querySelector('.searchbar-count');if(count)count.textContent=`${shown} / ${valid.length}`;
+  };
+  const install=()=>cfg.forEach(c=>{
+    const host=document.getElementById(c.host),body=document.getElementById(c.body); if(!host||!body)return;
+    let input=host.querySelector('input');
+    if(!input){
+      host.innerHTML='<div class="searchbar"><div class="searchbar-main"><span class="searchbar-icon">⌕</span><input type="search" placeholder="'+c.ph+'" autocomplete="off"><button type="button" class="searchbar-clear" data-clear>Temizle</button></div><span class="searchbar-count"></span></div>';
+      input=host.querySelector('input');
+      input.addEventListener('input',()=>apply(c));
+      host.querySelector('[data-clear]').addEventListener('click',()=>{input.value='';apply(c);input.focus()});
+    }
+    apply(c);
+  });
+  install();
+  const mo=new MutationObserver(()=>install());
+  cfg.forEach(c=>{const b=document.getElementById(c.body);if(b)mo.observe(b,{childList:true,subtree:true})});
+  const pageObserver=new MutationObserver(()=>setTimeout(install,0));
+  pageObserver.observe(document.body,{childList:true,subtree:true});
+
+  // Search products inside the quote modal without replacing any existing application functions.
+  const modalObserver=new MutationObserver(()=>{
+    const box=document.getElementById('modalBox'); if(!box)return;
+    const heading=[...box.querySelectorAll('h2,h3')].find(h=>norm(h.textContent).includes('ürünler')); if(!heading)return;
+    const grid=[...box.querySelectorAll('.products')].find(x=>x.querySelector('.p')); if(!grid||box.querySelector('#quoteProductSearchStable'))return;
+    const wrap=document.createElement('div');wrap.id='quoteProductSearchStable';wrap.className='searchbar';wrap.innerHTML='<div class="searchbar-main"><span class="searchbar-icon">⌕</span><input type="search" placeholder="Teklif için ürün ara..." autocomplete="off"><button type="button" class="searchbar-clear">Temizle</button></div><span class="searchbar-count"></span>';
+    grid.parentNode.insertBefore(wrap,grid);
+    const input=wrap.querySelector('input'),clear=wrap.querySelector('button'),count=wrap.querySelector('.searchbar-count');
+    const apply=()=>{const q=norm(input.value),cards=[...grid.querySelectorAll('.p')];let n=0;cards.forEach(card=>{const ok=!q||norm(card.textContent).includes(q);card.style.display=ok?'':'none';if(ok)n++});count.textContent=`${n} / ${cards.length}`};
+    input.addEventListener('input',apply);clear.addEventListener('click',()=>{input.value='';apply();input.focus()});apply();
+  });
+  const modal=document.getElementById('modalBox');if(modal)modalObserver.observe(modal,{childList:true,subtree:true});
+})();
+</script>
+'''
+          s = s.replace('</body>', js + '</body>', 1)
+          p.write_text(s, encoding='utf-8')
+      - name: Commit stable search changes
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add index.html
-          git diff --cached --quiet || git commit -m "Add search bars across customers products quotes jobs and payments"
-          git push
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "Install stable search bars without breaking app"
+            git push
+          fi
