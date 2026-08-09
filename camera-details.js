@@ -63,25 +63,21 @@
   }
   recoverBrokenIndexScript();
 
-  /* Görsel tema: mevcut uygulama mantığına dokunmadan yalnızca görünümü iyileştirir. */
   function loadProfessionalTheme(){
     if(document.getElementById('turkogluProfessionalTheme'))return;
     const link=document.createElement('link');link.id='turkogluProfessionalTheme';link.rel='stylesheet';link.href='./theme.css?v=1';document.head.appendChild(link);
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',loadProfessionalTheme,{once:true});else loadProfessionalTheme();
 
-  /* Ürünler: mevcut arama ve stok filtresine ek olarak marka + kategori filtreleri. */
   function initProductFilters(){
     const section=document.getElementById('products');
     const bar=section?.querySelector('.searchbar');
     if(!section||!bar||document.getElementById('productBrandFilter'))return;
-
     const makeSelect=(id,placeholder)=>{
       const s=document.createElement('select');
       s.id=id;s.title=placeholder;s.setAttribute('aria-label',placeholder);
       s.style.maxWidth='210px';s.innerHTML=`<option value="all">${placeholder}</option>`;
-      s.addEventListener('change',applyProductFilters);
-      return s;
+      s.addEventListener('change',applyProductFilters);return s;
     };
     const brand=makeSelect('productBrandFilter','Tüm markalar');
     const category=makeSelect('productCategoryFilter','Tüm kategoriler');
@@ -93,117 +89,70 @@
       const search=document.getElementById('productSearch');if(search)search.value='';
       if(typeof window.renderProducts==='function')window.renderProducts();else applyProductFilters();
     });
-    bar.appendChild(brand);bar.appendChild(category);bar.appendChild(clear);
-    refreshProductFilterOptions();
+    bar.appendChild(brand);bar.appendChild(category);bar.appendChild(clear);refreshProductFilterOptions();
   }
-
   const productBrands=['Avenir','Dahua','Hikvision','HiLook','Uniview','Provision-ISR','TVT','TP-Link','Reçber','HES Kablo','Nexans','Mutlusan','Mean Well','Mervesan','Tunçmatik','Seagate','Western Digital','FormRack','NetConnect','Diverse','Standart','Hizmet'];
   function refreshProductFilterOptions(){
-    const brand=document.getElementById('productBrandFilter'),category=document.getElementById('productCategoryFilter');
-    if(!brand||!category)return;
-    const oldBrand=brand.value,oldCategory=category.value;
-    const rows=[...document.querySelectorAll('#productRows tr')];
-    const cats=new Set();
+    const brand=document.getElementById('productBrandFilter'),category=document.getElementById('productCategoryFilter');if(!brand||!category)return;
+    const oldBrand=brand.value,oldCategory=category.value;const rows=[...document.querySelectorAll('#productRows tr')];const cats=new Set();
     rows.forEach(row=>{const cells=row.cells;if(cells?.length>3){const c=cells[3].textContent.trim();if(c)cats.add(c);}});
     brand.innerHTML='<option value="all">Tüm markalar</option>'+productBrands.map(b=>`<option value="${b}">${b}</option>`).join('');
     category.innerHTML='<option value="all">Tüm kategoriler</option>'+[...cats].sort((a,b)=>a.localeCompare(b,'tr')).map(c=>`<option value="${c.replace(/"/g,'&quot;')}">${c}</option>`).join('');
-    if([...brand.options].some(o=>o.value===oldBrand))brand.value=oldBrand;
-    if([...category.options].some(o=>o.value===oldCategory))category.value=oldCategory;
-    applyProductFilters();
+    if([...brand.options].some(o=>o.value===oldBrand))brand.value=oldBrand;if([...category.options].some(o=>o.value===oldCategory))category.value=oldCategory;applyProductFilters();
   }
-
-  function rowBrand(text){
-    const n=norm(text);
-    return productBrands.find(b=>n.includes(norm(b)))||'';
-  }
-
+  function rowBrand(text){const n=norm(text);return productBrands.find(b=>n.includes(norm(b)))||'';}
   function applyProductFilters(){
-    const brand=norm(document.getElementById('productBrandFilter')?.value||'all');
-    const category=norm(document.getElementById('productCategoryFilter')?.value||'all');
-    document.querySelectorAll('#productRows tr').forEach(row=>{
-      const cells=row.cells;
-      if(!cells||cells.length<4)return;
-      const rowText=row.textContent||'';
-      const rowCat=norm(cells[3].textContent);
-      const brandOk=brand==='all'||norm(rowBrand(rowText))===brand;
-      const categoryOk=category==='all'||rowCat===category;
-      row.style.display=brandOk&&categoryOk?'':'none';
-    });
+    const brand=norm(document.getElementById('productBrandFilter')?.value||'all');const category=norm(document.getElementById('productCategoryFilter')?.value||'all');
+    document.querySelectorAll('#productRows tr').forEach(row=>{const cells=row.cells;if(!cells||cells.length<4)return;const rowText=row.textContent||'';const rowCat=norm(cells[3].textContent);const brandOk=brand==='all'||norm(rowBrand(rowText))===brand;const categoryOk=category==='all'||rowCat===category;row.style.display=brandOk&&categoryOk?'':'none';});
   }
-
   function watchProductRows(){
-    initProductFilters();
-    const rows=document.getElementById('productRows');
-    if(!rows||rows.dataset.filterWatcher)return;
-    rows.dataset.filterWatcher='1';
-    const observer=new MutationObserver(()=>{
-      clearTimeout(observer._timer);
-      observer._timer=setTimeout(()=>{refreshProductFilterOptions();},0);
-    });
-    observer.observe(rows,{childList:true,subtree:true});
+    initProductFilters();const rows=document.getElementById('productRows');if(!rows||rows.dataset.filterWatcher)return;rows.dataset.filterWatcher='1';
+    const observer=new MutationObserver(()=>{clearTimeout(observer._timer);observer._timer=setTimeout(()=>refreshProductFilterOptions(),0)});observer.observe(rows,{childList:true,subtree:true});
   }
 
-  /* Teklif oluştururken ürün seçimine de aynı filtreleme mantığı. */
+  /* Teklif ürün filtreleri: mevcut addQuoteItem tıklamasını değiştirmez. */
+  function quoteProductSource(){return Array.isArray(window.products)?window.products:(typeof products!=='undefined'?products:[]);}
+  function quoteCardProduct(card,source){
+    const onclick=card.getAttribute('onclick')||'';
+    const match=onclick.match(/addQuoteItem\s*\(\s*['"]([^'"]+)['"]\s*\)/);
+    if(match){const byId=source.find(x=>String(x.id)===String(match[1]));if(byId)return byId;}
+    const text=norm(card.textContent||'');
+    return source.find(x=>text.includes(norm(x.name))&&(!x.model||text.includes(norm(x.model))))||null;
+  }
   function initQuoteProductFilters(){
-    const search=document.getElementById('quoteProductSearch');
-    const box=document.getElementById('quoteProducts');
-    if(!search||!box||document.getElementById('quoteProductBrandFilter'))return;
-    const bar=search.parentElement;
-    if(!bar)return;
-    const make=(id,label)=>{
-      const s=document.createElement('select');
-      s.id=id;s.title=label;s.setAttribute('aria-label',label);s.style.maxWidth='170px';
-      s.innerHTML=`<option value="all">${label}</option>`;
-      s.addEventListener('change',applyQuoteProductFilters);
-      return s;
-    };
-    const brand=make('quoteProductBrandFilter','Tüm markalar');
-    const category=make('quoteProductCategoryFilter','Tüm kategoriler');
-    const stock=make('quoteProductStockFilter','Tüm stoklar');
-    const clear=document.createElement('button');
-    clear.type='button';clear.className='light';clear.textContent='Filtreleri Temizle';
-    clear.addEventListener('click',()=>{
-      search.value='';brand.value='all';category.value='all';stock.value='all';applyQuoteProductFilters();
-    });
-    bar.appendChild(brand);bar.appendChild(category);bar.appendChild(stock);bar.appendChild(clear);
-    const source=Array.isArray(window.products)?window.products:(typeof products!=='undefined'?products:[]);
+    const search=document.getElementById('quoteProductSearch'),box=document.getElementById('quoteProducts');
+    if(!search||!box)return;
+    let brand=document.getElementById('quoteProductBrandFilter'),category=document.getElementById('quoteProductCategoryFilter'),stock=document.getElementById('quoteProductStockFilter');
+    if(!brand||!category||!stock){
+      const bar=search.parentElement;if(!bar)return;
+      const make=(id,label)=>{const s=document.createElement('select');s.id=id;s.title=label;s.setAttribute('aria-label',label);s.style.maxWidth='170px';s.innerHTML=`<option value="all">${label}</option>`;s.addEventListener('change',applyQuoteProductFilters);return s;};
+      brand=make('quoteProductBrandFilter','Tüm markalar');category=make('quoteProductCategoryFilter','Tüm kategoriler');stock=make('quoteProductStockFilter','Tüm stoklar');
+      const clear=document.createElement('button');clear.type='button';clear.className='light';clear.textContent='Filtreleri Temizle';clear.addEventListener('click',()=>{search.value='';brand.value='all';category.value='all';stock.value='all';applyQuoteProductFilters();});
+      bar.appendChild(brand);bar.appendChild(category);bar.appendChild(stock);bar.appendChild(clear);
+    }
+    const source=quoteProductSource();
     const brands=[...new Set(source.map(p=>String(p.brand||'').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'tr'));
     const cats=[...new Set(source.map(p=>String(p.category||'').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'tr'));
+    const oldBrand=brand.value,oldCategory=category.value,oldStock=stock.value;
     brand.innerHTML='<option value="all">Tüm markalar</option>'+brands.map(v=>`<option value="${esc(v)}">${esc(v)}</option>`).join('');
     category.innerHTML='<option value="all">Tüm kategoriler</option>'+cats.map(v=>`<option value="${esc(v)}">${esc(v)}</option>`).join('');
+    if([...brand.options].some(o=>o.value===oldBrand))brand.value=oldBrand;if([...category.options].some(o=>o.value===oldCategory))category.value=oldCategory;if([...stock.options].some(o=>o.value===oldStock))stock.value=oldStock;
     applyQuoteProductFilters();
   }
-
   function applyQuoteProductFilters(){
-    const search=norm(document.getElementById('quoteProductSearch')?.value||'');
-    const brand=norm(document.getElementById('quoteProductBrandFilter')?.value||'all');
-    const category=norm(document.getElementById('quoteProductCategoryFilter')?.value||'all');
-    const stock=document.getElementById('quoteProductStockFilter')?.value||'all';
-    const source=Array.isArray(window.products)?window.products:(typeof products!=='undefined'?products:[]);
+    const search=norm(document.getElementById('quoteProductSearch')?.value||'');const brand=norm(document.getElementById('quoteProductBrandFilter')?.value||'all');const category=norm(document.getElementById('quoteProductCategoryFilter')?.value||'all');const stock=document.getElementById('quoteProductStockFilter')?.value||'all';
+    const source=quoteProductSource();
     document.querySelectorAll('#quoteProducts .p').forEach(card=>{
-      const id=card.getAttribute('onclick')?.match(/addQuoteItem\(['"]([^'"]+)/)?.[1];
-      const p=source.find(x=>x.id===id);
-      const text=norm(card.dataset.search||card.textContent||'');
-      const q=p||{};const s=num(q.stock);
-      const searchOk=!search||text.includes(search);
-      const brandOk=brand==='all'||norm(q.brand)===brand;
-      const categoryOk=category==='all'||norm(q.category)===category;
+      const p=quoteCardProduct(card,source);const text=norm(card.dataset.search||card.textContent||'');const s=num(p?.stock);
+      const searchOk=!search||text.includes(search);const brandOk=brand==='all'||norm(p?.brand)===brand;const categoryOk=category==='all'||norm(p?.category)===category;
       const stockOk=stock==='all'||(stock==='available'&&s>0)||(stock==='low'&&s>0&&s<=5)||(stock==='zero'&&s<=0);
-      card.style.display=searchOk&&brandOk&&categoryOk&&stockOk?'':'none';
+      card.style.display=searchOk&&brandOk&&categoryOk&&stockOk?'':'block'===card.style.display?'block':'';
+      if(!(searchOk&&brandOk&&categoryOk&&stockOk))card.style.display='none';else card.style.removeProperty('display');
     });
   }
-
   function watchQuoteProductFilters(){
-    const modalBox=document.getElementById('modalBox');
-    if(!modalBox||modalBox.dataset.quoteFilterWatcher)return;
-    modalBox.dataset.quoteFilterWatcher='1';
-    const observer=new MutationObserver(()=>{
-      clearTimeout(observer._timer);
-      observer._timer=setTimeout(()=>{initQuoteProductFilters();},0);
-    });
-    observer.observe(modalBox,{childList:true,subtree:true});
+    const modalBox=document.getElementById('modalBox');if(!modalBox||modalBox.dataset.quoteFilterWatcher)return;modalBox.dataset.quoteFilterWatcher='1';
+    const observer=new MutationObserver(()=>{clearTimeout(observer._timer);observer._timer=setTimeout(()=>initQuoteProductFilters(),0)});observer.observe(modalBox,{childList:true,subtree:true});
   }
-
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>{watchProductRows();watchQuoteProductFilters()},{once:true});
-  else setTimeout(()=>{watchProductRows();watchQuoteProductFilters()},50);
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>{watchProductRows();watchQuoteProductFilters()},{once:true});else setTimeout(()=>{watchProductRows();watchQuoteProductFilters()},50);
 })();
