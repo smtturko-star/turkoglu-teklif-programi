@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - 'scripts/seed-camera-products.py'
+      - '.github/workflows/apply-camera-seed.yml'
 
 permissions:
   contents: write
