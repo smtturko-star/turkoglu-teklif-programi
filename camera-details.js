@@ -1,9 +1,43 @@
-/* Türkoğlu CCTV model doğrulama yardımcıları.
-   ÖNEMLİ: Bu dosya uygulama açılışını ve Supabase bağlantısını değiştirmez.
-   URL/key, oturum veya SDK kurulumu burada yapılmaz.
-*/
+/* Türkoğlu CCTV model doğrulama ve bağlantı yardımcıları. */
 (function(){
   'use strict';
+
+  /* URL/key mevcut değerlerden okunur; değerler değiştirilmez. */
+  async function connectFromSetup(){
+    const urlEl=document.getElementById('cfgUrl');
+    const keyEl=document.getElementById('cfgKey');
+    const msgEl=document.getElementById('authMsg');
+    const setup=document.getElementById('setupBox');
+    const auth=document.getElementById('authBox');
+    const u=(urlEl?.value||'').trim().replace(/\/$/,'');
+    const k=(keyEl?.value||'').trim();
+
+    if(msgEl)msgEl.textContent='';
+    if(!/^https:\/\/[a-z0-9-]+\.supabase\.co$/i.test(u)||!k){
+      if(msgEl)msgEl.textContent='Supabase Proje URL ve Publishable / Anon Key gerekli.';
+      return;
+    }
+
+    try{
+      localStorage.setItem('turkoglu_sb_cfg',JSON.stringify({u,k}));
+      if(typeof initClient!=='function')throw new Error('Bağlantı motoru yüklenemedi.');
+      const ok=initClient();
+      if(!ok||typeof client==='undefined'||!client)throw new Error('Supabase istemcisi oluşturulamadı.');
+      if(msgEl)msgEl.textContent='Supabase bağlantısı kontrol ediliyor...';
+      const result=await client.auth.getSession();
+      if(result.error)throw result.error;
+      if(setup)setup.classList.add('hidden');
+      if(auth)auth.classList.remove('hidden');
+      if(msgEl)msgEl.textContent='Bağlantı başarılı. Şimdi giriş yapabilirsiniz.';
+    }catch(e){
+      console.error('Sisteme Bağlan:',e);
+      if(msgEl)msgEl.textContent='Bağlantı kurulamadı: '+(e?.message||String(e));
+      else alert('Bağlantı kurulamadı: '+(e?.message||String(e)));
+    }
+  }
+
+  /* Inline onclick tarafından çağrılan fonksiyonu güvenli akışla değiştir. */
+  window.saveConfig=connectFromSetup;
 
   const details={
     'Avenir 2MP IP Kamera':{model:'AV-IP3020-I'},
@@ -48,7 +82,6 @@
         if(!groups.has(key))groups.set(key,[]);
         groups.get(key).push(p);
       });
-
       const remove=[];
       for(const [key,list] of groups){
         const canonical=names.get(key);
@@ -58,12 +91,10 @@
         if(update.error)throw update.error;
         list.filter(p=>p.id!==keep.id).forEach(p=>remove.push(p.id));
       }
-
       for(let i=0;i<remove.length;i+=100){
         const d=await client.from('products').delete().in('id',remove.slice(i,i+100));
         if(d.error)throw d.error;
       }
-
       if(remove.length&&typeof loadAll==='function')await loadAll();
       if(remove.length&&typeof toast==='function')toast(`${remove.length} tekrarlı kamera kaydı temizlendi.`);
     }catch(e){
@@ -74,6 +105,4 @@
   }
 
   window.turkogluCleanCameraCatalog=cleanCameraCatalog;
-
-  /* Açılışta otomatik temizlik YOK. Site önce açılsın ve kullanıcı giriş yapabilsin. */
 })();
