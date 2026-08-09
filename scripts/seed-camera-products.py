@@ -59,3 +59,5 @@ s = s.replace("if(user){showApp();await loadAll()}", "if(user){showApp();await s
 s = s.replace("if(session?.user){user=session.user;showApp();setTimeout(loadAll,0)}", "if(session?.user){user=session.user;showApp();setTimeout(async()=>{await seedCommonCameraProducts();await loadAll()},0)}", 1)
 p.write_text(s, encoding='utf-8')
 print('patched index.html')
+
+# trigger the workflow after the workflow file itself has been installed
