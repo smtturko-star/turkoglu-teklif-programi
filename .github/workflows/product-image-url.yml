@@ -1,0 +1,40 @@
+name: Add product image URL support
+on:
+  push:
+    branches: [main]
+permissions:
+  contents: write
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch product image URL support
+        shell: python
+        run: |
+          from pathlib import Path
+          import re
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+          if 'id="piUrl"' not in s:
+              old='<div style="grid-column:1/-1"><label>Gerçek Ürün Görseli (maks. 5 MB)</label><input id="pi" type="file" accept="image/*"></div>'
+              new='''<div style="grid-column:1/-1"><label>Ürün Görseli URL\'si</label><input id="piUrl" type="url" placeholder="https://.../urun-gorseli.jpg" value="${esc(p.image_url||'')}"><div id="piUrlPreview" style="margin-top:8px"></div><p class="muted">İnternetteki doğrudan görsel adresini yapıştırabilirsiniz.</p></div>\n  <div style="grid-column:1/-1"><label>Veya bilgisayardan görsel (maks. 5 MB)</label><input id="pi" type="file" accept="image/*"></div>'''
+              if old not in s: raise SystemExit('product image input not found')
+              s=s.replace(old,new,1)
+              anchor="  $('pi')?.addEventListener('change',e=>{"
+              code='''  $('piUrl')?.addEventListener('input',e=>{\n    const u=e.target.value.trim(); const box=$('piUrlPreview'); if(!box)return;\n    box.innerHTML=u?`<img class="preview-img" src="${esc(u)}" alt="Görsel önizleme" onerror="this.style.display='none'">`:'';\n  });\n  $('piUrl')?.dispatchEvent(new Event('input'));\n'''
+              if anchor not in s: raise SystemExit('product file listener anchor not found')
+              s=s.replace(anchor,code+anchor,1)
+          if "const url=$('piUrl')?.value.trim()" not in s:
+              old="const old=products.find(x=>x.id===editing);let image_url=old?.image_url||null;const file=$('pi')?.files?.[0];"
+              new="const old=products.find(x=>x.id===editing);let image_url=$('piUrl')?.value.trim()||old?.image_url||null;const file=$('pi')?.files?.[0];"
+              if old not in s: raise SystemExit('saveProduct anchor not found')
+              s=s.replace(old,new,1)
+          p.write_text(s,encoding='utf-8')
+      - name: Commit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          if git diff --cached --quiet; then echo "No changes"; else git commit -m "Add product image URL input"; git push; fi
