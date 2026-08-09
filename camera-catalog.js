@@ -4,10 +4,7 @@
   const catalog=[];
   const ipBrands=['Avenir','HiLook','Hikvision','Dahua'];
   const hdBrands=['Hikvision','Dahua'];
-  [
-    ...ipBrands.flatMap(brand=>[2,4,6,8].map(mp=>({brand,category:'IP Kamera',mp}))),
-    ...hdBrands.flatMap(brand=>[2,4,6,8].map(mp=>({brand,category:'HD Kamera',mp})))
-  ].forEach(x=>catalog.push({
+  [...ipBrands.flatMap(brand=>[2,4,6,8].map(mp=>({brand,category:'IP Kamera',mp}))),...hdBrands.flatMap(brand=>[2,4,6,8].map(mp=>({brand,category:'HD Kamera',mp})))].forEach(x=>catalog.push({
     name:`${x.brand} ${x.mp}MP ${x.category}`,
     brand:x.brand,
     model:`GEN-${x.category==='IP Kamera'?'IP':'HD'}-${x.mp}MP`,
@@ -19,26 +16,28 @@
     description:`${x.brand} ${x.mp} MP ${x.category}. Fiyat ve gerçek model bilgisi sonradan düzenlenebilir.`,
     image_url:null
   }));
-
+  const norm=v=>String(v??'').trim().toLocaleLowerCase('tr-TR');
+  const key=p=>[p.name,p.brand,p.model,p.category].map(norm).join('|');
   async function seed(){
-    if(!window.client || !window.user) return;
     if(localStorage.getItem(KEY)==='done') return;
     try{
-      const r=await window.client.from('products').select('name,brand,model,category');
-      if(r.error) throw r.error;
-      const existing=new Set((r.data||[]).map(p=>[p.name,p.brand,p.model,p.category].map(v=>String(v||'').trim().toLocaleLowerCase('tr-TR')).join('|')));
-      const missing=catalog.filter(p=>!existing.has([p.name,p.brand,p.model,p.category].map(v=>String(v||'').trim().toLocaleLowerCase('tr-TR')).join('|')));
+      const cfg=JSON.parse(localStorage.getItem('turkoglu_sb_cfg')||'{}');
+      if(!cfg.u||!cfg.k||!window.supabase?.createClient)return;
+      const sb=window.supabase.createClient(cfg.u,cfg.k,{auth:{persistSession:true,autoRefreshToken:true}});
+      const session=(await sb.auth.getSession()).data.session;
+      if(!session?.user)return;
+      const r=await sb.from('products').select('name,brand,model,category');
+      if(r.error)throw r.error;
+      const existing=new Set((r.data||[]).map(key));
+      const missing=catalog.filter(p=>!existing.has(key(p)));
       if(missing.length){
-        const ins=await window.client.from('products').insert(missing);
-        if(ins.error) throw ins.error;
+        const ins=await sb.from('products').insert(missing);
+        if(ins.error)throw ins.error;
       }
       localStorage.setItem(KEY,'done');
-      if(typeof window.loadAll==='function') await window.loadAll();
-      if(typeof window.toast==='function') window.toast(`${missing.length} kamera ürünü kataloğa eklendi.`);
-    }catch(e){
-      console.error('Kamera kataloğu eklenemedi:',e);
-    }
+      if(typeof window.toast==='function')window.toast(`${missing.length} kamera ürünü kataloğa eklendi.`);
+    }catch(e){console.error('Kamera kataloğu eklenemedi:',e)}
   }
   let tries=0;
-  const timer=setInterval(()=>{tries++;if(window.client&&window.user){clearInterval(timer);seed()}else if(tries>120)clearInterval(timer)},500);
+  const timer=setInterval(()=>{tries++;seed();if(tries>120)clearInterval(timer)},500);
 })();
