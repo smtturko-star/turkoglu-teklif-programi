@@ -455,66 +455,79 @@ async function saveSettings(){
   if(r.error)return alert(r.error.message);company=r.data||company;toast('Firma ayarları kaydedildi.');await loadAll();
 }
 
-<script id="turkoglu-search-js">
 (function(){
   const configs=[
-    ['customers','customerRows','Müşteri ara...'],
-    ['products','productRows','Ürün, marka, model veya kategori ara...'],
+    ['customers','customerRows','Müşteri, yetkili, telefon, e-posta veya adres ara...'],
+    ['products','productRows','Ürün adı, marka, model veya kategori ara...'],
     ['quotes','quoteRows','Teklif no, müşteri veya durum ara...'],
-    ['jobs','jobRows','Müşteri, iş veya durum ara...'],
+    ['jobs','jobRows','Müşteri, iş/proje veya durum ara...'],
     ['payments','paymentRows','Müşteri, tarih, yöntem veya açıklama ara...']
   ];
   const norm=v=>String(v??'').toLocaleLowerCase('tr-TR');
-  function filterRows(key,tbodyId,value){
-    const q=norm(value).trim(), body=document.getElementById(tbodyId); if(!body)return;
-    let shown=0,total=0;
+  const state={customers:'',products:'',quotes:'',jobs:'',payments:''};
+
+  function applyRows(key,tbodyId){
+    const body=document.getElementById(tbodyId); if(!body)return;
+    const q=norm(state[key]).trim();
+    let total=0,shown=0;
     [...body.querySelectorAll('tr')].forEach(tr=>{
-      const cells=[...tr.children];
+      const cells=tr.children;
       if(!cells.length)return;
-      const empty=cells.length===1 && /^(Müşteri|Ürün|Teklif|İş|Ödeme) yok\.?$/i.test(tr.textContent.trim());
+      const empty=cells.length===1;
       if(empty){tr.style.display=q?'none':'';return;}
       total++;
       const ok=!q || norm(tr.textContent).includes(q);
-      tr.style.display=ok?'':'none'; if(ok)shown++;
+      tr.style.display=ok?'':'none';
+      if(ok)shown++;
     });
-    const count=document.getElementById('search-count-'+key); if(count)count.textContent=q?shown+' / '+total:'Toplam '+total;
+    const c=document.getElementById('search-count-'+key);
+    if(c)c.textContent=q ? shown+' / '+total : 'Toplam '+shown;
   }
-  function addBar(sectionId,tbodyId,placeholder,key){
+
+  function addTableBar(sectionId,tbodyId,placeholder,key){
     const section=document.getElementById(sectionId); if(!section)return;
-    if(section.querySelector('.global-search'))return;
-    const card=section.querySelector('.card'); if(!card)return;
-    const table=card.querySelector('table'); if(!table)return;
-    const bar=document.createElement('div'); bar.className='global-search';
+    if(section.querySelector('[data-search-key="'+key+'"]'))return;
+    const card=section.querySelector('.card');
+    const table=card?.querySelector('table');
+    if(!table)return;
+    const bar=document.createElement('div');
+    bar.className='global-search';
+    bar.dataset.searchKey=key;
     bar.innerHTML='<div class="global-search-main"><span class="global-search-icon">🔎</span><input type="search" autocomplete="off" placeholder="'+placeholder+'"></div><span class="global-search-count" id="search-count-'+key+'">Toplam 0</span><button type="button" class="global-search-clear">Temizle</button>';
     table.parentNode.insertBefore(bar,table);
     const input=bar.querySelector('input');
-    input.addEventListener('input',()=>filterRows(key,tbodyId,input.value));
-    bar.querySelector('.global-search-clear').addEventListener('click',()=>{input.value='';filterRows(key,tbodyId,'');input.focus()});
+    input.addEventListener('input',()=>{state[key]=input.value;applyRows(key,tbodyId)});
+    bar.querySelector('.global-search-clear').addEventListener('click',()=>{state[key]='';input.value='';applyRows(key,tbodyId);input.focus()});
     const body=document.getElementById(tbodyId);
-    if(body)new MutationObserver(()=>filterRows(key,tbodyId,input.value)).observe(body,{childList:true});
-    filterRows(key,tbodyId,'');
+    if(body)new MutationObserver(()=>applyRows(key,tbodyId)).observe(body,{childList:true});
+    applyRows(key,tbodyId);
   }
-  function addQuoteProductSearch(){
-    const productsBox=document.querySelector('#modalBox .products'); if(!productsBox || productsBox.previousElementSibling?.dataset?.quoteSearch==='1')return;
-    const wrap=document.createElement('div'); wrap.dataset.quoteSearch='1'; wrap.className='global-search';
-    wrap.innerHTML='<div class="global-search-main"><span class="global-search-icon">🔎</span><input type="search" autocomplete="off" placeholder="Teklif için ürün ara..."></div><button type="button" class="global-search-clear">Temizle</button>';
-    productsBox.parentNode.insertBefore(wrap,productsBox);
-    const input=wrap.querySelector('input');
-    const apply=()=>{const q=norm(input.value).trim();productsBox.querySelectorAll('.p').forEach(card=>card.style.display=(!q||norm(card.textContent).includes(q))?'':'none')};
+
+  function addQuoteProductBar(){
+    const box=document.querySelector('#modalBox .products');
+    if(!box || box.previousElementSibling?.dataset?.quoteProductSearch==='1')return;
+    const bar=document.createElement('div');
+    bar.className='global-search';
+    bar.dataset.quoteProductSearch='1';
+    bar.innerHTML='<div class="global-search-main"><span class="global-search-icon">🔎</span><input type="search" autocomplete="off" placeholder="Teklif için ürün ara: ad, marka, model veya kategori..."></div><button type="button" class="global-search-clear">Temizle</button>';
+    box.parentNode.insertBefore(bar,box);
+    const input=bar.querySelector('input');
+    const apply=()=>{const q=norm(input.value).trim();box.querySelectorAll('.p').forEach(card=>card.style.display=(!q||norm(card.textContent).includes(q))?'':'none')};
     input.addEventListener('input',apply);
-    wrap.querySelector('.global-search-clear').addEventListener('click',()=>{input.value='';apply();input.focus()});
+    bar.querySelector('.global-search-clear').addEventListener('click',()=>{input.value='';apply();input.focus()});
   }
-  function init(){
-    configs.forEach(c=>addBar(c[0],c[1],c[2],c[0]));
-    addQuoteProductSearch();
-    const modal=document.getElementById('modalBox');
-    if(modal)new MutationObserver(addQuoteProductSearch).observe(modal,{childList:true,subtree:true});
+
+  function install(){
+    configs.forEach(c=>addTableBar(c[0],c[1],c[2],c[0]));
+    addQuoteProductBar();
   }
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
+
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install);else install();
+  const modal=document.getElementById('modalBox');
+  if(modal)new MutationObserver(addQuoteProductBar).observe(modal,{childList:true,subtree:true});
 })();
-</script>
 
 start();
-
 </script>
-\n<!-- TURKOGLU_GLOBAL_SEARCH_V1 -->\n<script>\n(function(){\n  const state={customers:'',products:'',quotes:'',jobs:'',payments:'',quoteProducts:''};\n  const lower=v=>String(v??'').toLocaleLowerCase('tr-TR');\n  const addBar=(sectionId,hostId,placeholder,key)=>{\n    const host=document.getElementById(hostId); if(!host)return;\n    host.innerHTML=`<div class="global-search"><div class="global-search-main"><span class="global-search-icon">⌕</span><input id="${hostId}Input" type="search" placeholder="${placeholder}" value="${esc(state[key])}" autocomplete="off"></div><button type="button" class="global-search-clear" onclick="window.__clearGlobalSearch('${key}')">Temizle</button><span id="${hostId}Count" class="global-search-count"></span></div>`;\n    document.getElementById(hostId+'Input').oninput=e=>{state[key]=e.target.value;window.__rerenderSearch(key)};\n  };\n  window.__clearGlobalSearch=key=>{state[key]='';window.__rerenderSearch(key)};\n  function ensureBars(){\n    const specs=[\n      ['customers','customerSearchHost','Müşteri, yetkili, telefon, e-posta veya adres ara...','customers'],\n      ['products','productSearchHost2','Ürün adı, marka, model veya kategori ara...','products'],\n      ['quotes','quoteSearchHost','Teklif no, müşteri veya durum ara...','quotes'],\n      ['jobs','jobSearchHost','Müşteri, iş/proje veya durum ara...','jobs'],\n      ['payments','paymentSearchHost','Müşteri, tarih, yöntem veya açıklama ara...','payments']\n    ];\n    specs.forEach(([sec,host,ph,key])=>addBar(sec,host,ph,key));\n  }\n  function count(id,n,total){const x=document.getElementById(id);if(x)x.textContent=`${n} / ${total}`;}\n  const originalCustomers=window.renderCustomers;\n  const originalProducts=window.renderProducts;\n  const originalQuotes=window.renderQuotes;\n  const originalJobs=window.renderJobs;\n  const originalPayments=window.renderPayments;\n  window.renderCustomers=function(){\n    ensureBars(); const q=lower(state.customers).trim(); const a=customers.filter(c=>!q||[c.company_name,c.contact_person,c.phone,c.whatsapp,c.email,c.tax_number,c.address,c.notes].some(v=>lower(v).includes(q)));\n    $('customerRows').innerHTML=a.map(c=>`<tr><td><b>${esc(c.company_name)}</b></td><td>${esc(c.contact_person)}</td><td>${esc(c.phone)}</td><td>${esc(c.address)}</td><td><div class="rowactions"><button onclick="customerModal('${c.id}')">Düzenle</button><button class="red" onclick="deleteCustomer('${c.id}')">Sil</button></div></td></tr>`).join('')||'<tr><td colspan="5">Aramaya uygun müşteri bulunamadı.</td></tr>';\n    count('customerSearchHostCount',a.length,customers.length);\n  };\n  window.renderProducts=function(){\n    ensureBars(); const q=lower(state.products).trim(); const a=products.filter(p=>!q||[p.name,p.brand,p.model,p.category,p.description].some(v=>lower(v).includes(q)));\n    $('productRows').innerHTML=a.map(p=>`<tr><td>${p.image_url?`<img class="thumb" src="${esc(p.image_url)}" alt="${esc(p.name)}">`:'-'}</td><td><b>${esc(p.name)}</b><br>${esc(p.brand)}</td><td>${esc(p.model)}</td><td>${esc(p.category)}</td><td>${money(p.sale_price)}</td><td>%${num(p.vat_rate)}</td><td><div class="rowactions"><button onclick="productModal('${p.id}')">Düzenle</button><button class="red" onclick="deleteProduct('${p.id}')">Sil</button></div></td></tr>`).join('')||'<tr><td colspan="7">Aramaya uygun ürün bulunamadı.</td></tr>';\n    count('productSearchHost2Count',a.length,products.length);\n  };\n  window.renderQuotes=function(){\n    ensureBars(); const q=lower(state.quotes).trim(); const a=quotes.filter(x=>!q||[x.quote_number,x.quote_date,x.status,x.customers?.company_name,x.customers?.contact_person].some(v=>lower(v).includes(q)));\n    $('quoteRows').innerHTML=a.map(x=>`<tr><td>${esc(x.quote_number)}</td><td>${esc(x.quote_date)}</td><td>${esc(x.customers?.company_name)}</td><td>${esc(x.status)}</td><td>${money(x.grand_total)}</td><td><div class="rowactions"><button onclick="openQuote('${x.id}',false)">Aç</button><button onclick="openQuote('${x.id}',true)">PDF</button><button class="red" onclick="deleteQuote('${x.id}')">Sil</button></div></td></tr>`).join('')||'<tr><td colspan="6">Aramaya uygun teklif bulunamadı.</td></tr>';\n    count('quoteSearchHostCount',a.length,quotes.length);\n  };\n  window.renderJobs=function(){\n    ensureBars(); const q=lower(state.jobs).trim(); const a=jobs.filter(x=>!q||[x.job_title,x.status,x.planned_installation_date,x.address,x.notes,x.customers?.company_name].some(v=>lower(v).includes(q)));\n    $('jobRows').innerHTML=a.map(x=>`<tr><td>${esc(x.customers?.company_name)}</td><td>${esc(x.job_title)}</td><td>${esc(x.status)}</td><td>${esc(x.planned_installation_date||'-')}</td><td>${money(x.remaining_amount)}</td><td><div class="rowactions"><button onclick="jobModal('${x.id}')">Düzenle</button><button class="red" onclick="deleteJob('${x.id}')">Sil</button></div></td></tr>`).join('')||'<tr><td colspan="6">Aramaya uygun iş bulunamadı.</td></tr>';\n    count('jobSearchHostCount',a.length,jobs.length);\n  };\n  window.renderPayments=function(){\n    ensureBars(); const q=lower(state.payments).trim(); const a=payments.filter(x=>!q||[x.payment_date,x.payment_method,x.description,x.customers?.company_name].some(v=>lower(v).includes(q)));\n    $('paymentRows').innerHTML=a.map(x=>`<tr><td>${esc(x.payment_date)}</td><td>${esc(x.customers?.company_name)}</td><td>${money(x.amount)}</td><td>${esc(x.payment_method)}</td><td>${esc(x.description)}</td><td><button class="red" onclick="deletePayment('${x.id}')">Sil</button></td></tr>`).join('')||'<tr><td colspan="6">Aramaya uygun ödeme bulunamadı.</td></tr>';\n    count('paymentSearchHostCount',a.length,payments.length);\n  };\n  window.__rerenderSearch=key=>{\n    if(key==='customers')renderCustomers();\n    if(key==='products')renderProducts();\n    if(key==='quotes')renderQuotes();\n    if(key==='jobs')renderJobs();\n    if(key==='payments')renderPayments();\n    if(key==='quoteProducts')renderQuoteProducts();\n  };\n  function renderQuoteProducts(){\n    const grid=document.getElementById('quoteProductGrid');if(!grid)return;\n    const q=lower(state.quoteProducts).trim();\n    const a=products.filter(p=>!q||[p.name,p.brand,p.model,p.category,p.description].some(v=>lower(v).includes(q)));\n    grid.innerHTML=a.map(p=>`<div class="p" onclick="addQuoteItem('${p.id}')">${p.image_url?`<img src="${esc(p.image_url)}" alt="">`:''}<div><b>${esc(p.name)}</b><br><span>${esc(p.brand)} ${esc(p.model)}</span><br><strong>${money(p.sale_price)} + KDV %${num(p.vat_rate)||20}</strong></div></div>`).join('')||'<p>Aramaya uygun ürün bulunamadı.</p>';\n    count('quoteProductSearchHostCount',a.length,products.length);\n  }\n  const oldQuoteEditor=window.quoteEditor;\n  window.quoteEditor=function(){\n    oldQuoteEditor();\n    const h3=[...document.querySelectorAll('#modalBox h3')].find(x=>x.textContent.includes('Ürünler'));\n    if(!h3)return;\n    const oldGrid=h3.nextElementSibling; if(!oldGrid)return;\n    oldGrid.id='quoteProductGrid';\n    const host=document.createElement('div');host.id='quoteProductSearchHost';host.innerHTML=`<div class="global-search"><div class="global-search-main"><span class="global-search-icon">⌕</span><input id="quoteProductSearchInput" type="search" placeholder="Teklif için ürün ara: ad, marka, model veya kategori..." autocomplete="off"></div><button type="button" class="global-search-clear" onclick="window.__clearGlobalSearch('quoteProducts')">Temizle</button><span id="quoteProductSearchHostCount" class="global-search-count"></span></div>`;\n    h3.insertAdjacentElement('afterend',host);\n    document.getElementById('quoteProductSearchInput').oninput=e=>{state.quoteProducts=e.target.value;renderQuoteProducts()};\n    renderQuoteProducts();\n  };\n  function installHosts(){\n    const map=[['customers','customerSearchHost'],['products','productSearchHost2'],['quotes','quoteSearchHost'],['jobs','jobSearchHost'],['payments','paymentSearchHost']];\n    map.forEach(([sec,id])=>{const section=document.getElementById(sec);if(section&&!document.getElementById(id)){const card=section.querySelector('.card');const table=card?.querySelector('table');if(table){const host=document.createElement('div');host.id=id;table.parentElement.insertBefore(host,table);}}});\n  }\n  const oldPage=window.page;\n  window.page=function(id){oldPage(id);if(['customers','products','quotes','jobs','payments'].includes(id)){installHosts();window.__rerenderSearch(id)}};\n  const oldRender=window.render;\n  window.render=function(){installHosts();oldRender();setTimeout(ensureBars,0)};\n  installHosts();\n})();\n</script>\n</body></html>
+</body>
+</html>
