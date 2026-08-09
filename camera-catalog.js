@@ -1,3 +1,24 @@
+/* Supabase browser SDK fallback: keep the existing URL/key screen, but recover if the primary CDN is blocked. */
+(function(){
+  if(window.supabase && typeof window.supabase.createClient==='function') return;
+  if(window.__turkogluSupabaseFallbackStarted) return;
+  window.__turkogluSupabaseFallbackStarted=true;
+  const loadScript=(src,done)=>{const s=document.createElement('script');s.src=src;s.async=true;s.onload=()=>done(true);s.onerror=()=>done(false);document.head.appendChild(s)};
+  loadScript('https://unpkg.com/@supabase/supabase-js@2',ok=>{
+    if(ok && window.supabase && typeof window.supabase.createClient==='function'){
+      if(typeof window.start==='function') window.start();
+      return;
+    }
+    import('https://esm.sh/@supabase/supabase-js@2').then(m=>{
+      window.supabase={createClient:m.createClient};
+      if(typeof window.start==='function') window.start();
+    }).catch(()=>{
+      const msg=document.getElementById('authMsg');
+      if(msg) msg.textContent='Supabase bağlantı kütüphanesi yüklenemedi. Sayfayı yenileyip tekrar deneyin.';
+    });
+  });
+})();
+
 /* Türkoğlu CCTV katalog + ürün görsel otomasyonu + filtreler */
 (function(){
   if(window.__turkogluCameraCatalogLoaded)return;
@@ -13,7 +34,6 @@
     ['Dahua','2MP HD Kamera','HAC-HFW1239MH(-A)-LED'],['Dahua','4MP HD Kamera','HAC-HFW1400TH-I4'],['Dahua','6MP HD Kamera','HAC-HFW2601E-A'],['Dahua','8MP HD Kamera','HAC-HFW1801T-A']
   ].map(([brand,category,model])=>({name:`${brand} ${category}`,brand,model,category,purchase_price:0,sale_price:0,vat_rate:20,stock:0,description:`${brand} ${category} — doğrulanmış model ${model}.`,image_url:null}));
 
-  /* Yalnızca modelle doğrulanmış görseller. Mevcut kullanıcı fotoğrafı ASLA ezilmez. */
   const imageMap={
     'hikvision|ds-2cd1023g2-i(uf)':'https://www.oncuguvenlik.com.tr/image/cache/catalog/ds-2cd1023g2-iufm-ds-2cd1023g2-iufm-hikvision-tr-tr-600x800.png',
     'hikvision|ds-2cd1043g2-liu(f)':'https://www.oncuguvenlik.com.tr/image/cache/catalog/ds-2cd1043g2-liuf-ds-2cd1043g2-liuf-hikvision-tr-tr-600x800.png',
