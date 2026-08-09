@@ -265,9 +265,15 @@ function productModal(id=null){
   <div><label>KDV</label><select id="pv"><option value="20" ${num(p.vat_rate)===20?'selected':''}>%20</option><option value="10" ${num(p.vat_rate)===10?'selected':''}>%10</option><option value="1" ${num(p.vat_rate)===1?'selected':''}>%1</option></select></div>
   <div><label>Stok</label><input id="pst" type="number" min="0" step="1" value="${num(p.stock)}"></div>
   <div style="grid-column:1/-1"><label>Açıklama</label><textarea id="pd">${esc(p.description)}</textarea></div>
-  <div style="grid-column:1/-1"><label>Gerçek Ürün Görseli (maks. 5 MB)</label><input id="pi" type="file" accept="image/*"></div>
+  <div style="grid-column:1/-1"><label>Ürün Görseli URL'si</label><input id="piUrl" type="url" placeholder="https://.../urun-gorseli.jpg" value="${esc(p.image_url||'')}"><div id="piUrlPreview" style="margin-top:8px"></div><p class="muted">İnternetteki doğrudan görsel adresini yapıştırabilirsiniz.</p></div>
+  <div style="grid-column:1/-1"><label>Veya bilgisayardan görsel (maks. 5 MB)</label><input id="pi" type="file" accept="image/*"></div>
   ${p.image_url?`<div style="grid-column:1/-1"><label>Mevcut Görsel</label><br><img src="${esc(p.image_url)}" style="width:120px;height:120px;object-fit:contain;border:1px solid #ddd;border-radius:8px;padding:5px"></div>`:''}
   </div><div class="actions" style="margin-top:14px"><button class="green" onclick="saveProduct()">Kaydet</button><button class="light" onclick="closeModal()">İptal</button></div>`);
+  $('piUrl')?.addEventListener('input',e=>{
+    const u=e.target.value.trim(); const box=$('piUrlPreview'); if(!box)return;
+    box.innerHTML=u?`<img class="preview-img" src="${esc(u)}" alt="Görsel önizleme" onerror="this.style.display='none'">`:'';
+  });
+  $('piUrl')?.dispatchEvent(new Event('input'));
   $('pi')?.addEventListener('change',e=>{
     const file=e.target.files?.[0]; if(!file)return;
     if(!file.type.startsWith('image/')||file.size>5*1024*1024){e.target.value='';return alert('Sadece 5 MB’a kadar görsel yükleyebilirsiniz.');}
@@ -279,7 +285,7 @@ function productModal(id=null){
 }
 async function saveProduct(){
   try{
-    const old=products.find(x=>x.id===editing);let image_url=old?.image_url||null;const file=$('pi')?.files?.[0];
+    const old=products.find(x=>x.id===editing);let image_url=$('piUrl')?.value.trim()||old?.image_url||null;const file=$('pi')?.files?.[0];
     if(file)image_url=await upload(file,`${user.id}/products/${crypto.randomUUID()}-${cfgKey(file.name)}`);
     const o={name:$('pn')?.value.trim()||'',brand:$('pb')?.value.trim()||'',model:$('pm')?.value.trim()||'',category:$('pc')?.value.trim()||'',purchase_price:Math.max(0,num($('pco')?.value)),sale_price:Math.max(0,num($('pps')?.value)),vat_rate:num($('pv')?.value)||20,stock:Math.max(0,Math.floor(num($('pst')?.value))),description:$('pd')?.value.trim()||'',image_url};
     if(!o.name)return alert('Ürün adı gerekli.');
