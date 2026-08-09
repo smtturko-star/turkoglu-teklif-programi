@@ -1,6 +1,20 @@
-/* Türkoğlu CCTV model doğrulama ve bağlantı yardımcıları. */
+/* Türkoğlu CCTV model doğrulama, uygulama kurtarma ve kurumsal arayüz yardımcıları. */
 (function(){
   'use strict';
+
+  /* Uygulama ana scripti parse edilemese bile giriş ekranını görünür tut. */
+  function ensureLoginVisible(){
+    const login=document.getElementById('loginView');
+    if(login){
+      login.style.display='block';
+      login.style.visibility='visible';
+      login.style.opacity='1';
+      login.style.pointerEvents='auto';
+      return true;
+    }
+    return false;
+  }
+  ensureLoginVisible();
 
   async function connectFromSetup(){
     const urlEl=document.getElementById('cfgUrl'); const keyEl=document.getElementById('cfgKey'); const msgEl=document.getElementById('authMsg'); const setup=document.getElementById('setupBox'); const auth=document.getElementById('authBox');
@@ -15,10 +29,42 @@
   async function cleanCameraCatalog(){if(running||typeof client==='undefined'||!client||typeof user==='undefined'||!user)return;running=true;try{const r=await client.from('products').select('id,name,model');if(r.error)throw r.error;const groups=new Map();(r.data||[]).filter(p=>names.has(norm(p.name))).forEach(p=>{const key=norm(p.name);if(!groups.has(key))groups.set(key,[]);groups.get(key).push(p);});const remove=[];for(const [key,list]of groups){const canonical=names.get(key);if(!canonical)continue;const keep=list.find(p=>norm(p.model)===norm(canonical.model))||list[0];const update=await client.from('products').update({model:canonical.model}).eq('id',keep.id);if(update.error)throw update.error;list.filter(p=>p.id!==keep.id).forEach(p=>remove.push(p.id));}for(let i=0;i<remove.length;i+=100){const d=await client.from('products').delete().in('id',remove.slice(i,i+100));if(d.error)throw d.error;}if(remove.length&&typeof loadAll==='function')await loadAll();if(remove.length&&typeof toast==='function')toast(`${remove.length} tekrarlı kamera kaydı temizlendi.`);}catch(e){console.error('CCTV katalog temizliği:',e)}finally{running=false;}}
   window.turkogluCleanCameraCatalog=cleanCameraCatalog;
 
-  let recoveryStarted=false;async function recoverBrokenIndexScript(){if(recoveryStarted)return;recoveryStarted=true;try{if(typeof window.saveConfig==='function'&&typeof window.start==='function')return;const response=await fetch('./index.html?recovery='+Date.now(),{cache:'no-store'});if(!response.ok)throw new Error('index.html kurtarma dosyası okunamadı: HTTP '+response.status);const html=await response.text();const match=html.match(/<script>\s*([\s\S]*?)<\/script>\s*<script src="\.\/camera-catalog\.js">/i);if(!match)throw new Error('Ana uygulama scripti bulunamadı.');const broken=match[1];const fixed=broken.replace("\"'\":'&#039;'}[m]),today=","\"'\":'&#039;'}[m])),today=");if(fixed===broken)throw new Error('Bilinen JavaScript sözdizimi hatası bulunamadı.');(0,eval)(fixed);console.info('Türkoğlu: bozuk inline uygulama scripti kurtarıldı.');}catch(e){console.error('Türkoğlu uygulama kurtarma:',e);const msg=document.getElementById('authMsg');if(msg)msg.textContent='Uygulama JavaScript hatası düzeltilemedi: '+(e?.message||String(e));}}
+  /* Ana inline scriptteki bilinen eksik ')' hatasını güvenli şekilde kurtar. */
+  let recoveryStarted=false;
+  async function recoverBrokenIndexScript(){
+    if(recoveryStarted)return;
+    recoveryStarted=true;
+    try{
+      ensureLoginVisible();
+      if(typeof window.saveConfig==='function'&&typeof window.start==='function')return;
+      const response=await fetch('./index.html?recovery='+Date.now(),{cache:'no-store'});
+      if(!response.ok)throw new Error('index.html kurtarma dosyası okunamadı: HTTP '+response.status);
+      const html=await response.text();
+      const match=html.match(/<script>\s*([\s\S]*?)<\/script>\s*<script src=["']\.\/camera-catalog\.js["']/i);
+      if(!match)throw new Error('Ana uygulama scripti bulunamadı.');
+      let fixed=match[1];
+      const before=fixed;
+      fixed=fixed.replace(/(\{\s*'&'\s*:\s*'&amp;'[\s\S]*?'\s*:\s*'&#039;'\s*\}\s*\[m\])\s*\),\s*today\s*=/, '$1)),today=');
+      if(fixed===before)fixed=fixed.replace("'\":'&#039;'}[m]),today=", "'\":'&#039;'}[m])),today=");
+      try{(0,Function)(fixed)();}catch(first){
+        /* Son çare: yalnızca parse hatasının bilinen karakterini düzelt. */
+        fixed=before.replace('} [m]),today=', '}[m])),today=').replace('}[m]),today=', '}[m])),today=');
+        if(fixed===before)throw first;
+        (0,Function)(fixed)();
+      }
+      if(typeof window.start==='function')window.start();
+      ensureLoginVisible();
+      console.info('Türkoğlu: ana uygulama scripti kurtarıldı.');
+    }catch(e){
+      console.error('Türkoğlu uygulama kurtarma:',e);
+      ensureLoginVisible();
+      const msg=document.getElementById('authMsg');
+      if(msg)msg.textContent='Uygulama başlatılırken hata oluştu. Sayfayı yenileyin.';
+    }
+  }
   recoverBrokenIndexScript();
 
-  function loadProfessionalTheme(){if(document.getElementById('turkogluProfessionalTheme'))return;const link=document.createElement('link');link.id='turkogluProfessionalTheme';link.rel='stylesheet';link.href='./theme.css?v=2';document.head.appendChild(link);}
+  function loadProfessionalTheme(){if(document.getElementById('turkogluProfessionalTheme'))return;const link=document.createElement('link');link.id='turkogluProfessionalTheme';link.rel='stylesheet';link.href='./theme.css?v=3';document.head.appendChild(link);}
 
   function addCorporateStyles(){if(document.getElementById('turkogluCorporateStyles'))return;const s=document.createElement('style');s.id='turkogluCorporateStyles';s.textContent=`.corporate-brand{display:flex;align-items:center;gap:10px}.corporate-logo{width:42px;height:42px;border-radius:12px;object-fit:contain;box-shadow:0 7px 18px rgba(15,118,110,.18)}.corporate-brand strong{display:block;font-size:16px;line-height:1.15}.corporate-brand small{display:block;font-size:11px;color:#64748b;font-weight:650;margin-top:3px}.corporate-actions{display:flex;align-items:center;margin-right:8px}.instagram-link{display:inline-flex;align-items:center;gap:7px;text-decoration:none;color:#102033;background:#f7f1fa;border:1px solid #eadcf0;border-radius:12px;padding:8px 11px}.instagram-link span{font-size:22px;line-height:1}.instagram-link b{font-size:12px}.login-social{display:block;width:max-content;margin:18px auto 0;text-decoration:none;color:#334155;font-size:12px;font-weight:800}.quote-corporate{display:flex;flex-direction:column;gap:3px;text-align:right;color:#64748b;font-size:11px;line-height:1.35;margin-left:auto;max-width:330px}.quote-company{font-size:16px;font-weight:900;color:#102033}.quote-corporate a{color:#0f766e;text-decoration:none;font-weight:800}.quote-logo{width:110px!important;height:72px!important}.quote-footer{margin-top:28px;padding-top:12px;border-top:1px solid #dbe4ee;display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap;font-size:10px;color:#64748b}.quote-footer strong{color:#102033}@media(max-width:650px){.corporate-brand .corporate-logo{width:34px;height:34px}.corporate-brand strong{font-size:12px}.corporate-brand small{font-size:9px}.instagram-link{padding:7px 9px}.instagram-link b{display:none}.quote-corporate{text-align:left;margin:10px 0 0}.quote-footer{display:block}.quote-footer span{display:block;margin-top:4px}}`;document.head.appendChild(s);}
 
