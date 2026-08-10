@@ -1,0 +1,1 @@
+Mobile quote editor fix has been prepared in quote-mobile-fix.js and the workflow will inject it into index.html on main.
