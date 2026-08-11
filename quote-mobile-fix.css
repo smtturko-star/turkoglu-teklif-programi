@@ -1,9 +1,32 @@
-/* Teklif satırları: tüm temel işlemler aynı satırda, ekranda sabit ve sade. */
-#quoteModal #qitems{display:flex;flex-direction:column;gap:8px;}
-#quoteModal #qitems .quote-item-row{display:grid;grid-template-columns:minmax(180px,1fr) 82px 120px 82px 105px 36px;align-items:center;gap:8px;}
-#quoteModal #qitems input,#quoteModal #qitems select{min-width:0;width:100%;box-sizing:border-box;}
-#quoteModal #qitems .quote-item-row .remove-item,#quoteModal #qitems .quote-item-row button[onclick*="removeQuoteItem"]{width:32px;height:32px;padding:0;display:inline-flex;align-items:center;justify-content:center;margin:0;}
-@media (max-width:760px){
-  #quoteModal #qitems .quote-item-row{grid-template-columns:minmax(150px,1fr) 68px 96px 68px 88px 32px;gap:5px;}
-  #quoteModal #qitems{gap:6px;}
+/* Teklif satırları: kompakt masaüstü + mobil düzen */
+#qitems{overflow-x:auto}
+#qitems table{width:100%;min-width:0;table-layout:fixed}
+#qitems th,#qitems td{padding:7px 6px;vertical-align:middle}
+#qitems th:nth-child(1){width:32%}
+#qitems th:nth-child(2){width:14%}
+#qitems th:nth-child(3){width:18%}
+#qitems th:nth-child(4){width:12%}
+#qitems th:nth-child(5){width:17%}
+#qitems th:nth-child(6){width:7%;text-align:center}
+#qitems td:nth-child(2)>input{width:70px!important}
+#qitems td:nth-child(3)>input{width:105px!important}
+#qitems td:nth-child(4)>select{width:78px!important}
+#qitems td:nth-child(6){text-align:center}
+#qitems td:nth-child(6) button{width:34px;height:34px;padding:0;display:inline-flex;align-items:center;justify-content:center}
+.quote-unit{display:inline-block;margin-left:5px;font-weight:800;font-size:12px;color:#64748b;white-space:nowrap}
+#quoteMinimizedBar{position:fixed!important;right:18px!important;bottom:18px!important;left:auto!important;top:auto!important;z-index:10000!important}
+@media(max-width:760px){
+  #qitems table{table-layout:fixed}
+  #qitems th,#qitems td{padding:5px 3px;font-size:11px}
+  #qitems th:nth-child(1){width:30%}
+  #qitems th:nth-child(2){width:18%}
+  #qitems th:nth-child(3){width:20%}
+  #qitems th:nth-child(4){width:13%}
+  #qitems th:nth-child(5){width:13%}
+  #qitems th:nth-child(6){width:6%}
+  #qitems td:nth-child(2)>input{width:52px!important;padding:7px 5px}
+  #qitems td:nth-child(3)>input{width:76px!important;padding:7px 5px}
+  #qitems td:nth-child(4)>select{width:58px!important;padding:7px 4px}
+  .quote-unit{margin-left:2px;font-size:10px}
+  #qitems td:nth-child(6) button{width:28px;height:30px}
 }
