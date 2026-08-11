@@ -1,7 +1,15 @@
-/* Mobile quote line editor fix. Loaded after quote-fix.js. */
+/* Mobile/desktop quote line editor fix. */
 (function(){
   'use strict';
   const q=(s)=>document.querySelector(s);
+  const norm=(v)=>String(v??'').trim().toLocaleLowerCase('tr-TR');
+  const isMeterItem=(i)=>{
+    if(!i)return false;
+    const unit=norm(i.unit??i.birim??i.unit_name??i.unitName??i.olcuBirimi??i.product_unit??'');
+    if(/metre|meter|^mt$|^m$/.test(unit))return true;
+    const text=norm(`${i.product_name??''} ${i.product_model??''} ${i.product_category??''} ${i.category??''}`);
+    return /kablo kanalı|kablo kanali/.test(text) || (/kablo/.test(text) && !/bnc/.test(text));
+  };
   const refreshTotals=()=>{
     if(typeof quoteTotals!=='function')return;
     const t=quoteTotals(),box=q('#qtot'); if(!box)return;
@@ -9,14 +17,17 @@
   };
   const render=()=>{
     const el=q('#qitems'); if(!el)return;
-    el.innerHTML=(quoteDraft.items||[]).map((i,n)=>`<tr>
+    el.innerHTML=(quoteDraft.items||[]).map((i,n)=>{
+      const meter=isMeterItem(i), unit=meter?'mt':'Adet';
+      return `<tr>
       <td><b>${esc(i.product_name)}</b><br><span class="muted">${esc(i.product_model)}</span></td>
-      <td><input class="qfix-qty" data-i="${n}" type="number" min="1" step="1" inputmode="numeric" value="${Math.max(1,Math.floor(num(i.quantity)))}"></td>
+      <td><div class="qfix-qty-wrap"><input class="qfix-qty" data-i="${n}" type="number" min="1" step="1" inputmode="numeric" value="${Math.max(1,Math.floor(num(i.quantity)))}"><span class="qfix-unit">${unit}</span></div></td>
       <td><input class="qfix-price" data-i="${n}" type="number" min="0" step="0.01" inputmode="decimal" value="${num(i.unit_price)}"></td>
       <td><select class="qfix-vat" data-i="${n}"><option value="20" ${num(i.vat_rate)===20?'selected':''}>%20</option><option value="10" ${num(i.vat_rate)===10?'selected':''}>%10</option><option value="1" ${num(i.vat_rate)===1?'selected':''}>%1</option></select></td>
       <td class="qfix-total">${money(num(i.quantity)*num(i.unit_price))}</td>
       <td><button type="button" class="red qfix-remove" data-i="${n}" aria-label="Ürünü sil">×</button></td>
-    </tr>`).join('')||emptyRow(6,'Henüz ürün eklenmedi.');
+    </tr>`;
+    }).join('')||emptyRow(6,'Henüz ürün eklenmedi.');
     refreshTotals();
   };
   const update=(el)=>{
@@ -39,7 +50,7 @@
     if(q('#qitems'))render(); else if(typeof original==='function')original();
   };
   const style=document.createElement('style');
-  style.textContent=`#qitems input,#qitems select,#qitems button{touch-action:manipulation;-webkit-tap-highlight-color:transparent}@media(max-width:650px){#qitems input.qfix-qty{width:68px!important}#qitems input.qfix-price{width:96px!important}#qitems .qfix-vat{min-width:68px}#qitems .qfix-remove{width:42px;height:42px;padding:0;display:inline-flex;align-items:center;justify-content:center;font-size:20px}}`;
+  style.textContent=`#qitems input,#qitems select,#qitems button{touch-action:manipulation;-webkit-tap-highlight-color:transparent}#qitems .qfix-qty-wrap{display:flex;align-items:center;gap:6px;min-width:0}#qitems .qfix-unit{font-size:12px;font-weight:800;color:#0f766e;white-space:nowrap}@media(max-width:650px){#qitems input.qfix-qty{width:68px!important}#qitems input.qfix-price{width:96px!important}#qitems .qfix-vat{min-width:68px}#qitems .qfix-remove{width:42px;height:42px;padding:0;display:inline-flex;align-items:center;justify-content:center;font-size:20px}}`;
   document.head.appendChild(style);
   const boot=()=>{if(q('#qitems')&&!q('#qitems').dataset.qfixBoot){q('#qitems').dataset.qfixBoot='1';if(typeof window.renderQuoteDraft==='function'&&quoteDraft.items?.length)window.renderQuoteDraft();}};
   new MutationObserver(boot).observe(document.body,{childList:true,subtree:true});
