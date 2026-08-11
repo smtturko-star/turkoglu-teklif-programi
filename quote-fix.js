@@ -200,54 +200,64 @@
     });
   }
 
+  function syncUnits(modal){
+    if(!modal) return;
+    const rows = [...modal.querySelectorAll('#qitems tr')];
+    rows.forEach(row => {
+      const p = findRowProduct(row);
+      if(!p) return;
+      const meter = isMeterProduct(p);
+      row.dataset.quoteUnit = meter ? 'mt' : 'Adet';
+      const number = row.querySelector('input[type="number"]');
+      if(!number) return;
+      const holder = number.parentElement;
+      if(!holder) return;
+      let suffix = holder.querySelector('.quote-unit-suffix');
+      if(!suffix){
+        suffix = document.createElement('span');
+        suffix.className='quote-unit-suffix';
+        suffix.style.cssText='margin-left:6px;font-weight:800;color:#0f766e;white-space:nowrap';
+        holder.style.display='flex';
+        holder.style.alignItems='center';
+        holder.appendChild(suffix);
+      }
+      const wanted = meter ? 'mt' : 'Adet';
+      if(suffix.textContent !== wanted) suffix.textContent = wanted;
+    });
+  }
+
   function protectQuoteFields(){
     const modal=getModal();
     if(!modal || modal.dataset.quoteFieldFix==='1') return;
     modal.dataset.quoteFieldFix='1';
-
-    /* Input/select olaylarını modal seviyesinde kesme. Önceki yaklaşım event delegation kullanan
-       teklif kodunun adet, fiyat ve KDV alanlarını almasını engelleyebiliyordu. Sadece doğrudan
-       overlay tıklamasını kapatmak pencere davranışı için yeterlidir. */
-    const syncUnits = () => {
-      const rows = [...modal.querySelectorAll('#qitems tr')];
-      rows.forEach(row => {
-        const p = findRowProduct(row);
-        if(!p) return;
-        const meter = isMeterProduct(p);
-        row.dataset.quoteUnit = meter ? 'mt' : 'Adet';
-        const number = row.querySelector('input[type="number"]');
-        if(number){
-          const holder = number.parentElement;
-          if(holder && !holder.querySelector('.quote-unit-suffix')){
-            const suffix = document.createElement('span');
-            suffix.className='quote-unit-suffix';
-            suffix.textContent=meter?'mt':'Adet';
-            suffix.style.cssText='margin-left:6px;font-weight:800;color:#0f766e;white-space:nowrap';
-            holder.style.display='flex';
-            holder.style.alignItems='center';
-            holder.appendChild(suffix);
-          } else if(holder){
-            const suffix=holder.querySelector('.quote-unit-suffix');
-            if(suffix) suffix.textContent=meter?'mt':'Adet';
-          }
-        }
-      });
-    };
-
     modal.addEventListener('input', ev => {
-      if(ev.target.closest('#qitems')) setTimeout(syncUnits,0);
+      if(ev.target.closest('#qitems')) setTimeout(() => syncUnits(modal),0);
     }, false);
     modal.addEventListener('change', ev => {
-      if(ev.target.closest('#qitems')) setTimeout(syncUnits,0);
+      if(ev.target.closest('#qitems')) setTimeout(() => syncUnits(modal),0);
     }, false);
+    syncUnits(modal);
+  }
 
-    /* KRİTİK: Daha önce burada modal'ın tamamını izleyen bir MutationObserver vardı.
-       Ürün eklendiğinde syncUnits DOM'a .quote-unit-suffix ekliyor, bu da tekrar
-       MutationObserver'ı tetikliyordu. Teklif satırları render edilirken bu döngü
-       Chrome'da "Sayfa Yanıt Vermiyor" durumuna kadar büyüyebiliyordu.
-       Birim senkronizasyonunu observeLayout zaten render sonrası güvenli biçimde çağırıyor.
-       Bu nedenle ikinci observer tamamen kaldırıldı. */
-    syncUnits();
+  function observeQuoteRows(){
+    const modal=getModal();
+    if(!modal || modal.dataset.quoteRowsObserver==='1') return;
+    const qitems = modal.querySelector('#qitems');
+    if(!qitems) return;
+    modal.dataset.quoteRowsObserver='1';
+    let running=false;
+    const observer=new MutationObserver(() => {
+      if(running) return;
+      running=true;
+      requestAnimationFrame(() => {
+        running=false;
+        syncUnits(modal);
+        moveSelected();
+      });
+    });
+    observer.observe(qitems,{childList:true,subtree:true});
+    syncUnits(modal);
+    moveSelected();
   }
 
   function installQuoteWindow(){
@@ -264,9 +274,10 @@
     const addControls = () => {
       const head=modal.querySelector('.modalhead');
       const title=head?.querySelector('h2');
-      if(!head || !title) return;
+      if(!head || !title) return false;
       const isQuote=/teklif/i.test(title.textContent||'') || !!modal.querySelector('#qitems');
-      if(!isQuote || head.dataset.quoteWindowControls==='1') return;
+      if(!isQuote) return false;
+      if(head.dataset.quoteWindowControls==='1') return true;
       head.dataset.quoteWindowControls='1';
       const actions=document.createElement('div');
       actions.className='quote-window-actions';
@@ -289,10 +300,11 @@
         }
       });
       maxBtn.addEventListener('click', ev => { ev.preventDefault(); ev.stopPropagation(); modal.classList.toggle('quote-maximized-box'); });
+      return true;
     };
-    addControls();
-    const observer=new MutationObserver(addControls);
-    observer.observe(modal,{childList:true,subtree:true});
+    if(addControls()) return;
+    let tries=0;
+    const timer=setInterval(()=>{ tries++; if(addControls() || tries>=30) clearInterval(timer); },100);
   }
 
   function addQuoteWindowStyles(){
@@ -303,27 +315,25 @@
     document.head.appendChild(style);
   }
 
-  function observeLayout(){
-    const modal=getModal();
-    if(!modal || modal.dataset.quoteLayoutObserver==='1') return;
-    modal.dataset.quoteLayoutObserver='1';
-    let queued=false;
-    const schedule=()=>{ if(queued)return; queued=true; requestAnimationFrame(()=>{queued=false; moveSelected(); installQuoteWindow(); protectQuoteFields();}); };
-    new MutationObserver(schedule).observe(modal,{childList:true,subtree:true});
+  function start(){
+    let tries=0;
+    const boot=()=>{
+      const modal=getModal();
+      if(!modal) return false;
+      addQuoteWindowStyles();
+      initFilters();
+      cardClick();
+      removeFix();
+      installQuoteWindow();
+      protectQuoteFields();
+      observeQuoteRows();
+      moveSelected();
+      return true;
+    };
+    if(boot()) return;
+    const timer=setInterval(()=>{ tries++; if(boot() || tries>=60) clearInterval(timer); },150);
   }
 
-  function boot(){
-    const modal=getModal();
-    if(!modal) return false;
-    addQuoteWindowStyles();
-    initFilters(); cardClick(); removeFix(); installQuoteWindow(); protectQuoteFields(); observeLayout(); moveSelected();
-    return true;
-  }
-  function start(){
-    if(boot()) return;
-    const timer=setInterval(()=>{if(boot())clearInterval(timer);},150);
-    setTimeout(()=>clearInterval(timer),10000);
-  }
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',start,{once:true}); else start();
   window.turkogluQuoteFix={apply:applyFilters,moveSelected};
 })();
