@@ -1,0 +1,42 @@
+name: Attach page persistence
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'preserve-page.js'
+      - '.github/workflows/attach-page-persistence.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  attach:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Attach preserve-page.js to index.html
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+          tag='<script src="./preserve-page.js"></script>'
+          if tag not in s:
+              needle='<script src="./quote-mobile-fix.js"></script>'
+              if needle not in s:
+                  raise SystemExit('quote-mobile-fix.js script etiketi bulunamadı')
+              s=s.replace(needle, needle+'\n'+tag, 1)
+              p.write_text(s,encoding='utf-8')
+          PY
+      - name: Commit attachment
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          if git diff --cached --quiet; then
+            echo 'Already attached.'
+            exit 0
+          fi
+          git commit -m 'Attach page persistence script'
+          git push
