@@ -207,7 +207,7 @@
       const p = findRowProduct(row);
       if(!p) return;
       const meter = isMeterProduct(p);
-      row.dataset.quoteUnit = meter ? 'mt' : 'Adet';
+      row.dataset.quoteUnit = meter ? 'Metre' : 'Adet';
       const number = row.querySelector('input[type="number"]');
       if(!number) return;
       const holder = number.parentElement;
@@ -221,7 +221,7 @@
         holder.style.alignItems='center';
         holder.appendChild(suffix);
       }
-      const wanted = meter ? 'mt' : 'Adet';
+      const wanted = meter ? 'Metre' : 'Adet';
       if(suffix.textContent !== wanted) suffix.textContent = wanted;
     });
   }
@@ -315,12 +315,61 @@
     document.head.appendChild(style);
   }
 
+  function productClient(){
+    const candidates=[window.sb,window.supabaseClient,window.db,window.client,window.supabaseDb];
+    return candidates.find(x=>x && typeof x.from==='function') || null;
+  }
+
+  function initProductDelete(){
+    const rows=document.getElementById('productRows');
+    if(!rows || rows.dataset.deleteFix==='1') return;
+    rows.dataset.deleteFix='1';
+    const table=rows.closest('table');
+    if(table){
+      const head=table.querySelector('thead tr');
+      if(head && !head.querySelector('.product-delete-head')){
+        const th=document.createElement('th'); th.className='product-delete-head'; th.textContent='İşlem'; head.appendChild(th);
+      }
+    }
+    const decorate=()=>{
+      rows.querySelectorAll('tr').forEach(row=>{
+        if(row.querySelector('.product-delete-btn')) return;
+        const cells=row.querySelectorAll('td');
+        if(!cells.length) return;
+        let id=row.dataset.productId || row.getAttribute('data-product-id');
+        if(!id){
+          const edit=row.querySelector('[onclick*="productModal"],[onclick*="editProduct"]');
+          const raw=edit?.getAttribute('onclick')||'';
+          const m=raw.match(/['\"]([0-9a-f-]{20,})['\"]/i); if(m) id=m[1];
+        }
+        if(!id) return;
+        row.dataset.productId=id;
+        const td=document.createElement('td');
+        td.innerHTML='<button type="button" class="red product-delete-btn" style="padding:7px 10px" title="Ürünü sil">Sil</button>';
+        td.querySelector('button').addEventListener('click',async()=>{
+          const name=row.querySelector('td:nth-child(2)')?.textContent?.trim() || 'Bu ürün';
+          if(!confirm(`“${name}” ürününü silmek istediğinize emin misiniz?`)) return;
+          const client=productClient();
+          if(!client){ alert('Ürün veritabanı bağlantısı bulunamadı.'); return; }
+          const {error}=await client.from('products').update({active:false,updated_at:new Date().toISOString()}).eq('id',id);
+          if(error){ alert('Ürün silinemedi: '+error.message); return; }
+          row.remove();
+          if(typeof window.renderProducts==='function') window.renderProducts();
+        });
+        row.appendChild(td);
+      });
+    };
+    new MutationObserver(decorate).observe(rows,{childList:true,subtree:true});
+    decorate();
+  }
+
   function start(){
     let tries=0;
     const boot=()=>{
       const modal=getModal();
-      if(!modal) return false;
       addQuoteWindowStyles();
+      initProductDelete();
+      if(!modal) return false;
       initFilters();
       cardClick();
       removeFix();
