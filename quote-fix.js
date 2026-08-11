@@ -241,8 +241,12 @@
       if(ev.target.closest('#qitems')) setTimeout(syncUnits,0);
     }, false);
 
-    const observer=new MutationObserver(()=>syncUnits());
-    observer.observe(modal,{childList:true,subtree:true});
+    /* KRİTİK: Daha önce burada modal'ın tamamını izleyen bir MutationObserver vardı.
+       Ürün eklendiğinde syncUnits DOM'a .quote-unit-suffix ekliyor, bu da tekrar
+       MutationObserver'ı tetikliyordu. Teklif satırları render edilirken bu döngü
+       Chrome'da "Sayfa Yanıt Vermiyor" durumuna kadar büyüyebiliyordu.
+       Birim senkronizasyonunu observeLayout zaten render sonrası güvenli biçimde çağırıyor.
+       Bu nedenle ikinci observer tamamen kaldırıldı. */
     syncUnits();
   }
 
