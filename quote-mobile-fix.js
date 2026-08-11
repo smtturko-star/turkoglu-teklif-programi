@@ -1,91 +1,48 @@
-/* Teklif kalemleri: adet, birim fiyat, KDV, silme ve metre birimi. */
+/* Teklif kalemleri: adet, birim fiyat, KDV, silme, metre birimi ve kamera set kombinasyonları. */
 (function(){
   'use strict';
   const q=s=>document.querySelector(s);
   const norm=v=>String(v??'').trim().toLocaleLowerCase('tr-TR');
   const meterText=i=>norm(`${i?.product_name??''} ${i?.product_model??''} ${i?.product_category??''} ${i?.category??''} ${i?.unit??''} ${i?.birim??''}`);
-  const isMeterItem=i=>{
-    const t=meterText(i);
-    return /metre|meter|\bmt\b/.test(t)||/kablo kanalı|kablo kanali/.test(t)||(/kablo/.test(t)&&!/bnc/.test(t));
-  };
-  const refreshTotals=()=>{
-    if(typeof quoteTotals!=='function')return;
-    const t=quoteTotals(),box=q('#qtot');if(!box)return;
-    box.innerHTML=`<span>Ara toplam</span><span>${money(t.subtotal)}</span><span>İşçilik</span><span>${money(t.labor)}</span><span>İskonto</span><span>-${money(t.discount)}</span><span>KDV</span><span>${money(t.vat)}</span><strong>GENEL TOPLAM</strong><strong>${money(t.total)}</strong>`;
-  };
-  const render=()=>{
-    const el=q('#qitems');if(!el||typeof quoteDraft==='undefined')return;
-    el.innerHTML=(quoteDraft.items||[]).map((i,n)=>{
-      const meter=isMeterItem(i),unit=meter?'mt':'Adet';
-      return `<tr data-qindex="${n}">
-        <td><b>${esc(i.product_name)}</b><br><span class="muted">${esc(i.product_model)}</span></td>
-        <td><div class="qfix-qty-wrap"><input class="qfix-qty" data-i="${n}" type="number" min="1" step="1" inputmode="numeric" value="${Math.max(1,Math.floor(num(i.quantity)))}"><span class="qfix-unit">${unit}</span></div></td>
-        <td><input class="qfix-price" data-i="${n}" type="number" min="0" step="0.01" inputmode="decimal" value="${num(i.unit_price)}"></td>
-        <td><select class="qfix-vat" data-i="${n}"><option value="20" ${num(i.vat_rate)===20?'selected':''}>%20</option><option value="10" ${num(i.vat_rate)===10?'selected':''}>%10</option><option value="1" ${num(i.vat_rate)===1?'selected':''}>%1</option></select></td>
-        <td class="qfix-total">${money(num(i.quantity)*num(i.unit_price))}</td>
-        <td><button type="button" class="red qfix-remove" data-i="${n}" aria-label="Ürünü sil" title="Ürünü sil">×</button></td>
-      </tr>`;
-    }).join('')||emptyRow(6,'Henüz ürün eklenmedi.');
-    refreshTotals();
-    syncPrintUnits();
-  };
-  const update=el=>{
-    if(typeof quoteDraft==='undefined')return;
-    const i=quoteDraft.items?.[Number(el.dataset.i)];if(!i)return;
-    if(el.classList.contains('qfix-qty'))i.quantity=Math.max(1,Math.floor(Number(el.value)||1));
-    else if(el.classList.contains('qfix-price'))i.unit_price=Math.max(0,Number(el.value)||0);
-    else if(el.classList.contains('qfix-vat'))i.vat_rate=Number(el.value)||20;
-    const row=el.closest('tr');
-    if(row){const total=row.querySelector('.qfix-total');if(total)total.textContent=money(num(i.quantity)*num(i.unit_price));}
-    refreshTotals();
-    syncPrintUnits();
-  };
-  const syncPrintUnits=()=>{
-    const root=q('#quotePrint');if(!root)return;
-    root.querySelectorAll('table tbody tr').forEach(row=>{
-      const cells=row.children;if(cells.length<7)return;
-      const product=norm(cells[1]?.textContent||'');
-      if(!(/kablo kanalı|kablo kanali/.test(product)||(/kablo/.test(product)&&!/bnc/.test(product))))return;
-      const qty=cells[3];if(!qty)return;
-      const raw=qty.textContent.trim().replace(/\s*(mt|metre|meter)$/i,'');
-      if(raw)qty.textContent=raw+' mt';
-    });
-  };
-  const bind=()=>{
-    const el=q('#qitems');if(!el||el.dataset.stableQuoteEditor==='1')return;
-    el.dataset.stableQuoteEditor='1';
-    el.addEventListener('input',e=>{
-      const target=e.target.closest('.qfix-qty,.qfix-price');if(!target)return;
-      e.stopPropagation();update(target);
-    });
-    el.addEventListener('change',e=>{
-      const target=e.target.closest('.qfix-qty,.qfix-price,.qfix-vat');if(!target)return;
-      e.stopPropagation();update(target);
-    });
-    el.addEventListener('blur',e=>{
-      const target=e.target.closest('.qfix-qty,.qfix-price');if(!target)return;
-      update(target);
-    },true);
-    el.addEventListener('click',e=>{
-      const remove=e.target.closest('.qfix-remove');if(remove){
-        e.preventDefault();e.stopPropagation();
-        const i=Number(remove.dataset.i);
-        if(Number.isInteger(i)&&i>=0&&i<quoteDraft.items.length){quoteDraft.items.splice(i,1);render();}
-        return;
-      }
-      const field=e.target.closest('.qfix-qty,.qfix-price,.qfix-vat');
-      if(field){e.stopPropagation();field.focus();}
-    });
-  };
-  const original=window.renderQuoteDraft;
-  window.renderQuoteDraft=()=>{
-    if(q('#qitems')){render();bind();}
-    else if(typeof original==='function')original();
-  };
-  const style=document.createElement('style');
-  style.textContent=`#qitems input,#qitems select,#qitems button{touch-action:manipulation;-webkit-tap-highlight-color:transparent;position:relative;z-index:2}#qitems .qfix-qty-wrap{display:flex;align-items:center;gap:6px;min-width:0}#qitems .qfix-unit{font-size:12px;font-weight:800;color:#0f766e;white-space:nowrap}#qitems .qfix-qty,#qitems .qfix-price{cursor:text;user-select:text}#qitems .qfix-vat{cursor:pointer}@media(max-width:650px){#qitems input.qfix-qty{width:76px!important}#qitems input.qfix-price{width:100px!important}#qitems .qfix-vat{min-width:70px}#qitems .qfix-remove{width:42px;height:42px;padding:0;display:inline-flex;align-items:center;justify-content:center;font-size:20px}}`;
-  document.head.appendChild(style);
-  const boot=()=>{const el=q('#qitems');if(el){bind();if(typeof quoteDraft!=='undefined'&&quoteDraft.items?.length)render();}};
+  const isMeterItem=i=>{const t=meterText(i);return /metre|meter|\bmt\b/.test(t)||/kablo kanalı|kablo kanali/.test(t)||(/kablo/.test(t)&&!/bnc/.test(t));};
+  const refreshTotals=()=>{if(typeof quoteTotals!=='function')return;const t=quoteTotals(),box=q('#qtot');if(!box)return;box.innerHTML=`<span>Ara toplam</span><span>${money(t.subtotal)}</span><span>İşçilik</span><span>${money(t.labor)}</span><span>İskonto</span><span>-${money(t.discount)}</span><span>KDV</span><span>${money(t.vat)}</span><strong>GENEL TOPLAM</strong><strong>${money(t.total)}</strong>`;};
+  const render=()=>{const el=q('#qitems');if(!el||typeof quoteDraft==='undefined')return;el.innerHTML=(quoteDraft.items||[]).map((i,n)=>{const meter=isMeterItem(i),unit=meter?'mt':'Adet';return `<tr data-qindex="${n}"><td><b>${esc(i.product_name)}</b><br><span class="muted">${esc(i.product_model)}</span></td><td><div class="qfix-qty-wrap"><input class="qfix-qty" data-i="${n}" type="number" min="1" step="1" inputmode="numeric" value="${Math.max(1,Math.floor(num(i.quantity)))}"><span class="qfix-unit">${unit}</span></div></td><td><input class="qfix-price" data-i="${n}" type="number" min="0" step="0.01" inputmode="decimal" value="${num(i.unit_price)}"></td><td><select class="qfix-vat" data-i="${n}"><option value="20" ${num(i.vat_rate)===20?'selected':''}>%20</option><option value="10" ${num(i.vat_rate)===10?'selected':''}>%10</option><option value="1" ${num(i.vat_rate)===1?'selected':''}>%1</option></select></td><td class="qfix-total">${money(num(i.quantity)*num(i.unit_price))}</td><td><button type="button" class="red qfix-remove" data-i="${n}" aria-label="Ürünü sil" title="Ürünü sil">×</button></td></tr>`;}).join('')||emptyRow(6,'Henüz ürün eklenmedi.');refreshTotals();syncPrintUnits();};
+  const update=el=>{if(typeof quoteDraft==='undefined')return;const i=quoteDraft.items?.[Number(el.dataset.i)];if(!i)return;if(el.classList.contains('qfix-qty'))i.quantity=Math.max(1,Math.floor(Number(el.value)||1));else if(el.classList.contains('qfix-price'))i.unit_price=Math.max(0,Number(el.value)||0);else if(el.classList.contains('qfix-vat'))i.vat_rate=Number(el.value)||20;const row=el.closest('tr');if(row){const total=row.querySelector('.qfix-total');if(total)total.textContent=money(num(i.quantity)*num(i.unit_price));}refreshTotals();syncPrintUnits();};
+  const syncPrintUnits=()=>{const root=q('#quotePrint');if(!root)return;root.querySelectorAll('table tbody tr').forEach(row=>{const cells=row.children;if(cells.length<7)return;const product=norm(cells[1]?.textContent||'');if(!(/kablo kanalı|kablo kanali/.test(product)||(/kablo/.test(product)&&!/bnc/.test(product))))return;const qty=cells[3];if(!qty)return;const raw=qty.textContent.trim().replace(/\s*(mt|metre|meter)$/i,'');if(raw)qty.textContent=raw+' mt';});};
+  const bind=()=>{const el=q('#qitems');if(!el||el.dataset.stableQuoteEditor==='1')return;el.dataset.stableQuoteEditor='1';el.addEventListener('input',e=>{const target=e.target.closest('.qfix-qty,.qfix-price');if(!target)return;e.stopPropagation();update(target);});el.addEventListener('change',e=>{const target=e.target.closest('.qfix-qty,.qfix-price,.qfix-vat');if(!target)return;e.stopPropagation();update(target);});el.addEventListener('blur',e=>{const target=e.target.closest('.qfix-qty,.qfix-price');if(!target)return;update(target);},true);el.addEventListener('click',e=>{const remove=e.target.closest('.qfix-remove');if(remove){e.preventDefault();e.stopPropagation();const i=Number(remove.dataset.i);if(Number.isInteger(i)&&i>=0&&i<quoteDraft.items.length){quoteDraft.items.splice(i,1);render();}return;}const field=e.target.closest('.qfix-qty,.qfix-price,.qfix-vat');if(field){e.stopPropagation();field.focus();}});};
+  const original=window.renderQuoteDraft;window.renderQuoteDraft=()=>{if(q('#qitems')){render();bind();}else if(typeof original==='function')original();};
+  const style=document.createElement('style');style.textContent=`#qitems input,#qitems select,#qitems button{touch-action:manipulation;-webkit-tap-highlight-color:transparent;position:relative;z-index:2}#qitems .qfix-qty-wrap{display:flex;align-items:center;gap:6px;min-width:0}#qitems .qfix-unit{font-size:12px;font-weight:800;color:#0f766e;white-space:nowrap}#qitems .qfix-qty,#qitems .qfix-price{cursor:text;user-select:text}#qitems .qfix-vat{cursor:pointer}@media(max-width:650px){#qitems input.qfix-qty{width:76px!important}#qitems input.qfix-price{width:100px!important}#qitems .qfix-vat{min-width:70px}#qitems .qfix-remove{width:42px;height:42px;padding:0;display:inline-flex;align-items:center;justify-content:center;font-size:20px}}`;document.head.appendChild(style);
+  const comboProducts=()=>{try{if(typeof products!=='undefined'&&Array.isArray(products))return products;}catch{}return Array.isArray(window.products)?window.products:[];};
+  const productText=p=>norm(`${p?.name||''} ${p?.brand||''} ${p?.model||''} ${p?.category||''} ${p?.subcategory||p?.sub_category||''}`);
+  const stockOK=p=>Number(p?.stock??0)>0;
+  const mpOf=p=>{const m=productText(p).match(/(?:^|\s)(2|3|4|5|6|8|12|16)\s*(?:mp|megapiksel)/i);return m?Number(m[1]):0;};
+  const channelsOf=p=>{const t=productText(p);const m=t.match(/(?:^|\s)(4|8|16|32|64)\s*(?:kanal|ch|kanall[ıi])/i);if(m)return Number(m[1]);const model=String(p?.model||'').match(/(?:7604|7608|7616|7104|7108|7116)/);if(model)return Number(model[0].slice(-1));return 0;};
+  const score=p=>{const t=productText(p);return stockOK(p)?1000+Number(p?.sale_price||0)/100000:0;};
+  const pickRole=(role,count,level,excludeIds)=>{const list=comboProducts().filter(p=>!excludeIds.has(String(p.id)));const targetMp={Ekonomik:2,Orta:4,Profesyonel:8}[level]||4;let arr=[];
+    if(role==='camera')arr=list.filter(p=>/(kamera|camera)/.test(productText(p))&&!/(nvr|dvr|kayıt cihaz|kayit cihazi|recorder)/.test(productText(p))).map(p=>({p,s:(mpOf(p)?100-mathAbs(mpOf(p)-targetMp)*12:45)+(productText(p).includes('ip')?18:0)+(productText(p).includes('hikvision')?8:0)+(productText(p).includes('dahua')?7:0)}));
+    else if(role==='nvr')arr=list.filter(p=>/\bnvr\b/.test(productText(p))||/kayıt cihaz|kayit cihazi/.test(productText(p))).map(p=>({p,s:(channelsOf(p)===count?120:channelsOf(p)>count?90:30)+(productText(p).includes('ip')?15:0)+(productText(p).includes('hikvision')?7:0)}));
+    else if(role==='hdd')arr=list.filter(p=>/(hdd|hard ?disk|sabit disk|skyhawk|purple)/.test(productText(p))).map(p=>({p,s:productText(p).includes('7/24')?30:10}));
+    else if(role==='poe')arr=list.filter(p=>/poe/.test(productText(p))&&/(switch|swich)/.test(productText(p))).map(p=>({p,s:(channelsOf(p)>=count?80:20)+(productText(p).includes('gigabit')?10:0)}));
+    else if(role==='cat6')arr=list.filter(p=>/cat ?6/.test(productText(p))&&/kablo/.test(productText(p))).map(p=>({p,s:60+(productText(p).includes('bakır')||productText(p).includes('bakir')?15:0)}));
+    else if(role==='channel')arr=list.filter(p=>/kablo kanalı|kablo kanali/.test(productText(p))).map(p=>({p,s:80}));
+    else if(role==='rj45')arr=list.filter(p=>/rj.?45|8p8c/.test(productText(p))).map(p=>({p,s:70}));
+    else if(role==='box')arr=list.filter(p=>/(buat|rbox|kamera kutu|kamera buat|montaj kutu)/.test(productText(p))).map(p=>({p,s:70}));
+    else if(role==='mouse')arr=list.filter(p=>/(mouse|maus)/.test(productText(p))).map(p=>({p,s:50}));
+    else if(role==='ups')arr=list.filter(p=>/\bups\b/.test(productText(p))).map(p=>({p,s:40}));
+    else if(role==='rack')arr=list.filter(p=>/(rack|kabinet)/.test(productText(p))).map(p=>({p,s:30}));
+    arr.sort((a,b)=>b.s-a.s||score(a.p)-score(b.p));return arr[0]?.p||null;};
+  const addComboItem=(p,qty)=>{if(!p||!qty)return;if(typeof quoteDraft==='undefined'||!Array.isArray(quoteDraft.items))return;const found=quoteDraft.items.find(i=>String(i.product_id)===String(p.id));if(found){found.quantity=Number(found.quantity||0)+qty;return;}quoteDraft.items.push({product_id:p.id,product_name:p.name||'',product_model:p.model||'',description:p.description||'',image_url:p.image_url||null,quantity:qty,unit_price:num(p.sale_price),vat_rate:num(p.vat_rate)||20});};
+  const comboPanel=()=>{const h=[...document.querySelectorAll('#modalBox h1,#modalBox h2,#modalBox h3,#modalBox strong')].find(x=>/kamera seti kombinasyonu/i.test(x.textContent||''));return h?.closest('.card')||h?.parentElement?.parentElement||null;};
+  const showComboResult=(level,n,added,missing)=>{const root=comboPanel();if(!root)return;let box=root.querySelector('.combo-result');if(!box){box=document.createElement('div');box.className='combo-result';root.appendChild(box);}box.innerHTML=`<div style="margin-top:12px;padding:12px;border-radius:10px;background:#fff;border:1px solid #d1d5db"><b>${n} Kameralı ${esc(level)} Paket hazırlandı.</b><div class="muted" style="margin-top:5px">${added} kalem mevcut stoktan otomatik eklendi.</div>${missing.length?`<div style="margin-top:9px;color:#b45309"><b>Sonradan eklenmesi gerekenler:</b><ul style="margin:6px 0 0 18px">${missing.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div>`:'<div style="margin-top:8px;color:#166534;font-weight:800">Gerekli ana kalemler bulundu.</div>'}<div class="muted" style="margin-top:8px">Kablo: ${n===4?100:n===8?150:250} mt başlangıç miktarıdır; teklif içinde değiştirebilirsin.</div></div>`;};
+  const buildCombo=(n,level)=>{if(typeof quoteDraft==='undefined'||!Array.isArray(quoteDraft.items))return;const list=comboProducts();if(!list.length){toast('Ürün listesi henüz yüklenmedi.');return;}const ids=new Set(quoteDraft.items.map(i=>String(i.product_id)));let added=0,missing=[];const specs=[['camera',n,`${n} adet kamera`],['nvr',1,`${n} kanal NVR`],['hdd',1,'7/24 güvenlik HDD'],['poe',1,'PoE switch']];for(const [role,qty,label] of specs){const p=pickRole(role,n,level,ids);if(p){addComboItem(p,qty);ids.add(String(p.id));added++;}else missing.push(label);}
+    const cat6=pickRole('cat6',1,level,ids);if(cat6){addComboItem(cat6,n===4?100:n===8?150:250);ids.add(String(cat6.id));added++;}else missing.push(`${n===4?100:n===8?150:250} mt CAT6 kablo`);
+    const ch=pickRole('channel',1,level,ids);if(ch){addComboItem(ch,n===4?100:n===8?150:250);ids.add(String(ch.id));added++;}else missing.push('Kablo kanalı');
+    const rj=pickRole('rj45',1,level,ids);if(rj){addComboItem(rj,Math.max(8,n*2));ids.add(String(rj.id));added++;}else missing.push('RJ45 konnektör');
+    const bx=pickRole('box',1,level,ids);if(bx){addComboItem(bx,n);ids.add(String(bx.id));added++;}else missing.push('Kamera buat / montaj kutusu');
+    const mouse=pickRole('mouse',1,level,ids);if(mouse){addComboItem(mouse,1);ids.add(String(mouse.id));added++;}else missing.push('Kablolu mouse');
+    if(typeof window.renderQuoteDraft==='function')window.renderQuoteDraft();showComboResult(level,n,added,missing);toast(`${n} kameralı ${level} kombinasyon teklif kalemlerine eklendi.`);};
+  const interceptCombo=()=>{const modal=document.getElementById('modalBox');if(!modal||modal.dataset.comboEngine==='1')return;modal.dataset.comboEngine='1';modal.addEventListener('click',ev=>{const b=ev.target.closest('button');if(!b||!modal.contains(b))return;const txt=norm(b.textContent||'');const m=txt.match(/^(4|8|16)\s*kamera$/);if(!m)return;const all=[...modal.querySelectorAll('button')].filter(x=>/^(4|8|16)\s*kamera$/i.test(norm(x.textContent||'')));const idx=all.indexOf(b);if(idx<0)return;const level=['Ekonomik','Orta','Profesyonel'][Math.floor(idx/3)]||'Orta';ev.preventDefault();ev.stopPropagation();ev.stopImmediatePropagation();buildCombo(Number(m[1]),level);},true);};
+  const boot=()=>{const el=q('#qitems');if(el){bind();if(typeof quoteDraft!=='undefined'&&quoteDraft.items?.length)render();}interceptCombo();};
   new MutationObserver(boot).observe(document.body,{childList:true,subtree:true});
   boot();
 })();
