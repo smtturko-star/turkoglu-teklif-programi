@@ -23,4 +23,29 @@ const oe=window.quoteEditor;if(typeof oe==='function'&&!window.__qel){window.__q
 const or=window.renderQuoteDraft;if(typeof or==='function'&&!window.__qrd){window.__qrd=true;window.renderQuoteDraft=function(){const r=or.apply(this,arguments);setTimeout(quoteUi,20);return r}}
 function boot(){addCss();productPage();quoteUi()}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else setTimeout(boot,0);setInterval(()=>{if($('app')&&!$('app').classList.contains('hidden')){productPage();if($('qitems'))quoteUi()}},500);
+
+/* 5-6: Kontrol paneli doğrulama ve genel UI kalite katmanı. */
+function dashboardQuality(){
+  const activeProducts=productsList().filter(p=>p?.active!==false);
+  const lowStock=activeProducts.filter(p=>Number(p?.stock??0)<=5);
+  const openJobs=Array.isArray(window.jobs)?window.jobs.filter(j=>!['Tamamlandı','İptal'].includes(j?.status)):[];
+  const doneJobs=Array.isArray(window.jobs)?window.jobs.filter(j=>j?.status==='Tamamlandı'):[];
+  const pendingQuotes=Array.isArray(window.quotes)?window.quotes.filter(q=>['Teklif Verildi','Onay Bekliyor'].includes(q?.status)):[];
+  const set=(id,value)=>{const el=$(id);if(el)el.textContent=String(value)};
+  set('kp',activeProducts.length);
+  set('klow',lowStock.length);
+  set('kj',openJobs.length);
+  set('kd',doneJobs.length);
+  set('kqwait',pendingQuotes.length);
+  const outstanding=Array.isArray(window.jobs)?window.jobs.reduce((sum,j)=>sum+Math.max(0,Number(j?.remaining_amount)||0),0):0;
+  const kr=$('kr');if(kr)kr.textContent=new Intl.NumberFormat('tr-TR',{style:'currency',currency:'TRY'}).format(outstanding);
+}
+const originalDashboard=window.renderDashboard;
+if(typeof originalDashboard==='function'&&!window.__dashboardQuality){
+  window.__dashboardQuality=true;
+  window.renderDashboard=function(){originalDashboard.apply(this,arguments);dashboardQuality()};
+}
+function addQualityCss(){if($('tkQualityCss'))return;const s=document.createElement('style');s.id='tkQualityCss';s.textContent=`.pagehead{flex-wrap:wrap}.pagehead>.grow{min-width:20px}.actions button,.actions select{max-width:100%}@media(max-width:650px){.pagehead{gap:8px}.pagehead>.grow{display:none}.pagehead>button{width:auto}.card{padding:14px}.kpi{font-size:23px}.tablewrap{max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}.actions{gap:6px}.actions button,.actions select{min-height:40px}.modalbox{max-height:88vh}.searchbar{flex-wrap:wrap}.searchbar>*{min-width:0}}`;document.head.appendChild(s)}
+function qualityBoot(){addQualityCss();setTimeout(dashboardQuality,80)}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',qualityBoot,{once:true});else qualityBoot();
 })();
