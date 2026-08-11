@@ -6,6 +6,7 @@
   const products = () => Array.isArray(window.products) ? window.products : [];
   const subOf = p => String(p?.subcategory ?? p?.sub_category ?? p?.altCategory ?? p?.alt_category ?? p?.altKategori ?? '').trim();
   const getModal = () => document.getElementById('modalBox');
+  const getOverlay = () => document.getElementById('modal');
   const getPicker = () => document.getElementById('quoteProducts');
 
   function findProduct(card){
@@ -18,29 +19,6 @@
     }
     const text = norm(card?.textContent);
     return list.find(p => text.includes(norm(p.name)) && (!p.model || text.includes(norm(p.model)))) || null;
-  }
-
-  function isMeterProduct(p){
-    if(!p) return false;
-    const name = norm(p.name), category = norm(p.category), sub = norm(subOf(p));
-    if(/bnc/.test(name) || /konnektör|konnektor|ek|adaptör|adaptoru|bağ|bag/.test(name)) return false;
-    return /kablo\s*kanal|kablo kanali|kablo/.test(category) || /kablo\s*kanal|kablo kanali/.test(name) || /kablo\s*kanal|kablo kanali/.test(sub);
-  }
-
-  function normalizeQuoteUnits(){
-    const draft = window.quoteDraft;
-    if(!draft || !Array.isArray(draft.items)) return false;
-    let changed = false;
-    draft.items.forEach(item => {
-      const p = products().find(x => String(x.id) === String(item?.productId ?? item?.product_id ?? item?.id));
-      if(!p) return;
-      const meter = isMeterProduct(p);
-      const unit = meter ? 'mt' : (String(item.unit ?? item.birim ?? '').trim() || 'Adet');
-      if(item.unit !== unit){ item.unit = unit; changed = true; }
-      if('birim' in item && item.birim !== unit){ item.birim = unit; changed = true; }
-      if('unitType' in item && item.unitType !== unit){ item.unitType = unit; changed = true; }
-    });
-    return changed;
   }
 
   function moveSelected(){
@@ -197,19 +175,90 @@
     });
   }
 
+  function installQuoteWindow(){
+    const modal=getModal(), overlay=getOverlay();
+    if(!modal || !overlay || modal.dataset.quoteWindowInit==='1') return;
+    modal.dataset.quoteWindowInit='1';
+
+    /* Boş karartılmış alana tıklamak teklifi kapatmaz. Kapatma yalnızca X/İptal ile yapılır. */
+    overlay.addEventListener('click', ev => {
+      if(ev.target === overlay){
+        ev.preventDefault();
+        ev.stopPropagation();
+        ev.stopImmediatePropagation();
+      }
+    }, true);
+
+    const addControls = () => {
+      const head=modal.querySelector('.modalhead');
+      const title=head?.querySelector('h2');
+      if(!head || !title) return;
+      const isQuote=/teklif/i.test(title.textContent||'') || !!modal.querySelector('#qitems');
+      if(!isQuote || head.dataset.quoteWindowControls==='1') return;
+      head.dataset.quoteWindowControls='1';
+
+      const actions=document.createElement('div');
+      actions.className='quote-window-actions';
+      actions.style.cssText='display:flex;gap:6px;margin-left:auto;margin-right:8px;align-items:center';
+      actions.innerHTML='<button type="button" class="light" title="Küçült" aria-label="Küçült" style="width:36px;height:36px;padding:0;font-size:18px">−</button><button type="button" class="light" title="Büyüt" aria-label="Büyüt" style="width:36px;height:36px;padding:0;font-size:17px">⛶</button>';
+      const close=head.querySelector('.close');
+      head.insertBefore(actions,close||null);
+
+      const minBtn=actions.children[0], maxBtn=actions.children[1];
+      minBtn.addEventListener('click', ev => {
+        ev.preventDefault(); ev.stopPropagation();
+        overlay.classList.add('quote-minimized');
+        modal.classList.add('quote-minimized-box');
+        let bar=document.getElementById('quoteMinimizedBar');
+        if(!bar){
+          bar=document.createElement('button');
+          bar.id='quoteMinimizedBar';
+          bar.type='button';
+          bar.textContent='🧾 Teklif — devam et';
+          bar.title='Teklifi geri aç';
+          bar.style.cssText='position:fixed;right:18px;bottom:18px;z-index:10000;background:#0f172a;color:#fff;border:0;border-radius:12px;padding:11px 16px;font-weight:800;box-shadow:0 8px 24px #0003';
+          document.body.appendChild(bar);
+          bar.addEventListener('click',()=>{
+            overlay.classList.remove('quote-minimized');
+            modal.classList.remove('quote-minimized-box');
+            bar.remove();
+          });
+        }
+      });
+      maxBtn.addEventListener('click', ev => {
+        ev.preventDefault(); ev.stopPropagation();
+        modal.classList.toggle('quote-maximized-box');
+        maxBtn.textContent=modal.classList.contains('quote-maximized-box')?'⛶':'⛶';
+      });
+    };
+
+    addControls();
+    const observer=new MutationObserver(addControls);
+    observer.observe(modal,{childList:true,subtree:true});
+  }
+
+  function addQuoteWindowStyles(){
+    if(document.getElementById('quoteWindowStyles')) return;
+    const style=document.createElement('style');
+    style.id='quoteWindowStyles';
+    style.textContent='.modal:has(.quote-minimized-box){background:transparent!important;pointer-events:none}.modal .quote-minimized-box{display:none!important}.modal .quote-maximized-box{width:calc(100vw - 28px)!important;max-width:none!important;height:calc(100vh - 28px)!important;max-height:none!important}.modal .quote-maximized-box{pointer-events:auto}.modal:has(.quote-maximized-box){padding:14px}.modal:has(.quote-maximized-box) .quote-maximized-box{overflow:auto}';
+    document.head.appendChild(style);
+  }
+
   function observeLayout(){
     const modal=getModal();
     if(!modal || modal.dataset.quoteLayoutObserver==='1') return;
     modal.dataset.quoteLayoutObserver='1';
     let queued=false;
-    const schedule=()=>{ if(queued)return; queued=true; requestAnimationFrame(()=>{queued=false; normalizeQuoteUnits(); moveSelected();}); };
+    const schedule=()=>{ if(queued)return; queued=true; requestAnimationFrame(()=>{queued=false; moveSelected(); installQuoteWindow();}); };
     new MutationObserver(schedule).observe(modal,{childList:true,subtree:true});
   }
 
   function boot(){
     const modal=getModal();
     if(!modal) return false;
-    initFilters(); cardClick(); removeFix(); normalizeQuoteUnits(); observeLayout(); moveSelected();
+    addQuoteWindowStyles();
+    initFilters(); cardClick(); removeFix(); installQuoteWindow(); observeLayout(); moveSelected();
     return true;
   }
   function start(){
