@@ -204,13 +204,10 @@
     const modal=getModal();
     if(!modal || modal.dataset.quoteFieldFix==='1') return;
     modal.dataset.quoteFieldFix='1';
-    /* Kritik düzeltme: alanları capture aşamasında durdurmak input/select hedef olaylarını engelliyordu.
-       Artık yalnızca click bubble aşamasında modal dışındaki click zincirini kesiyoruz. */
-    modal.addEventListener('click', ev => {
-      const target = ev.target.closest('#qitems input,#qitems select,#qitems textarea,#qitems button');
-      if(target) ev.stopPropagation();
-    }, false);
 
+    /* Input/select olaylarını modal seviyesinde kesme. Önceki yaklaşım event delegation kullanan
+       teklif kodunun adet, fiyat ve KDV alanlarını almasını engelleyebiliyordu. Sadece doğrudan
+       overlay tıklamasını kapatmak pencere davranışı için yeterlidir. */
     const syncUnits = () => {
       const rows = [...modal.querySelectorAll('#qitems tr')];
       rows.forEach(row => {
