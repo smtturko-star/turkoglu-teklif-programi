@@ -1,10 +1,12 @@
-/* Teklif ürün seçimi: Ürünler bölümündeki filtre mantığını teklif ekranına taşır. */
+/* Teklif ürün seçimi ve teklif satırı yardımcıları. */
 (function(){
   'use strict';
 
   const norm = v => String(v ?? '').trim().toLocaleLowerCase('tr-TR');
   const products = () => Array.isArray(window.products) ? window.products : [];
   const subOf = p => String(p?.subcategory ?? p?.sub_category ?? p?.altCategory ?? p?.alt_category ?? p?.altKategori ?? '').trim();
+  const getModal = () => document.getElementById('modalBox');
+  const getPicker = () => document.getElementById('quoteProducts');
 
   function findProduct(card){
     const list = products();
@@ -18,22 +20,16 @@
     return list.find(p => text.includes(norm(p.name)) && (!p.model || text.includes(norm(p.model)))) || null;
   }
 
-  function getModal(){ return document.getElementById('modalBox'); }
-  function getPicker(){ return document.getElementById('quoteProducts'); }
-
   function moveSelected(){
     const modal = getModal(), picker = getPicker();
     if(!modal || !picker) return;
     const pickerParent = picker.closest('.card') || picker.parentElement;
     if(!pickerParent) return;
     const tables = [...modal.querySelectorAll('table')];
-    const table = tables.find(t => {
-      if(t === picker.closest('table')) return false;
-      return [...t.querySelectorAll('tr')].some(r => {
-        const txt = norm(r.textContent || '');
-        return /×|\bx\b|sil|kaldır/.test(txt) || r.querySelector('[onclick*="remove"],[onclick*="delete"],[aria-label="×"]');
-      });
-    });
+    const table = tables.find(t => t !== picker.closest('table') && [...t.querySelectorAll('tr')].some(r => {
+      const txt = norm(r.textContent || '');
+      return /×|\bx\b|sil|kaldır/.test(txt) || r.querySelector('[onclick*="remove"],[onclick*="delete"],[aria-label="×"]');
+    }));
     if(!table) return;
     const box = table.closest('.card') || table.parentElement;
     if(!box || box === pickerParent || box === picker || !box.parentElement) return;
@@ -91,11 +87,12 @@
     const sb = norm(sub?.value || 'all'), s = norm(stock?.value || 'all');
     box.querySelectorAll('.p').forEach(card => {
       const p = findProduct(card), text = norm(card.textContent);
-      const name = norm(p?.name), model = norm(p?.model), pb = norm(p?.brand), pc = norm(p?.category), ps = norm(subOf(p));
+      const vals = [text,norm(p?.name),norm(p?.model),norm(p?.brand),norm(p?.category),norm(subOf(p))];
       const qty = Number(p?.stock ?? 0);
-      const searchOK = !q || [text,name,model,pb,pc,ps].some(v => v.includes(q));
-      const brandOK = b === 'all' || pb === b, catOK = c === 'all' || pc === c;
-      const subOK = sb === 'all' || ps === sb;
+      const searchOK = !q || vals.some(v => v.includes(q));
+      const brandOK = b === 'all' || norm(p?.brand) === b;
+      const catOK = c === 'all' || norm(p?.category) === c;
+      const subOK = sb === 'all' || norm(subOf(p)) === sb;
       const stockOK = s === 'all' || (s === 'available' ? qty > 0 : s === 'low' ? qty > 0 && qty <= 5 : s === 'zero' ? qty <= 0 : true);
       card.hidden = !(searchOK && brandOK && catOK && subOK && stockOK);
       card.style.display = card.hidden ? 'none' : '';
@@ -116,8 +113,10 @@
     const bar = input.parentElement;
     if(!bar) return;
     box.dataset.quoteFilterInit = '1';
-    const brand = ensureSelect(bar, 'quoteProductBrandFilter'), cat = ensureSelect(bar, 'quoteProductCategoryFilter');
-    const sub = ensureSelect(bar, 'quoteProductSubcategoryFilter'), stock = ensureSelect(bar, 'quoteProductStockFilter');
+    const brand = ensureSelect(bar, 'quoteProductBrandFilter');
+    const cat = ensureSelect(bar, 'quoteProductCategoryFilter');
+    const sub = ensureSelect(bar, 'quoteProductSubcategoryFilter');
+    const stock = ensureSelect(bar, 'quoteProductStockFilter');
     let clear = removeDuplicateClearButtons(bar);
     if(!clear){
       clear = document.createElement('button');
@@ -128,60 +127,67 @@
     setOptions(brand, 'Tüm markalar', [...new Set(list.map(p => String(p.brand || '').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'tr')), 'all');
     setOptions(cat, 'Tüm kategoriler', [...new Set(list.map(p => String(p.category || '').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'tr')), 'all');
     setOptions(sub, 'Tüm alt kategoriler', [...new Set(list.map(subOf).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'tr')), 'all');
-    setOptions(stock, 'Tüm stoklar', ['Mevcut stok','Düşük stok','Stok yok'], 'all');
+    setOptions(stock, 'Tüm stoklar', ['Stokta var','Düşük stok','Stok yok'], 'all');
     stock.options[1].value='available'; stock.options[2].value='low'; stock.options[3].value='zero';
     input.addEventListener('input', applyFilters);
     brand.addEventListener('change', applyFilters);
     cat.addEventListener('change', () => { refreshSubcategory(); applyFilters(); });
-    sub.addEventListener('change', applyFilters); stock.addEventListener('change', applyFilters);
+    sub.addEventListener('change', applyFilters);
+    stock.addEventListener('change', applyFilters);
     clear.addEventListener('click', () => { input.value=''; brand.value='all'; cat.value='all'; sub.value='all'; stock.value='all'; refreshSubcategory(); applyFilters(); });
     applyFilters();
   }
 
   function cardClick(){
-    const box=getPicker(); if(!box || box.dataset.quoteClickFix==='1') return;
+    const box=getPicker();
+    if(!box || box.dataset.quoteClickFix==='1') return;
     box.dataset.quoteClickFix='1';
     box.addEventListener('click', ev => {
       const card=ev.target.closest('.p');
       if(!card || ev.target.closest('button,a,input,select')) return;
-      const p=findProduct(card); if(!p) return;
+      const p=findProduct(card);
+      if(!p) return;
       const raw=card.getAttribute('onclick') || '';
       if(!raw && typeof window.addQuoteItem==='function') window.addQuoteItem(p.id);
     });
   }
 
-  /* Teklif kalemi silme: doğrudan quoteDraft üzerinden kaldırır. */
+  /* Teklif kalemi silme: tek event sahibi. Capture kullanılmaz; mevcut satır davranışını ezmez. */
   function removeFix(){
-    const modal=getModal(); if(!modal || modal.dataset.quoteRemoveFix==='1') return;
+    const modal=getModal();
+    if(!modal || modal.dataset.quoteRemoveFix==='1') return;
     modal.dataset.quoteRemoveFix='1';
     modal.addEventListener('click', ev => {
       const el=ev.target.closest('button,a,[role="button"]');
       if(!el || !modal.contains(el)) return;
       const label=norm(el.getAttribute('aria-label') || el.getAttribute('title') || el.textContent).replace(/\s+/g,'');
       if(label!=='×' && label!=='x') return;
-      const row=el.closest('tr');
+      const row=el.closest('#qitems tr');
       const rows=[...modal.querySelectorAll('#qitems tr')];
       const index=row ? rows.indexOf(row) : -1;
-      if(index < 0) return;
-      if(!Array.isArray(window.quoteDraft?.items)) return;
+      if(index < 0 || !Array.isArray(window.quoteDraft?.items)) return;
       ev.preventDefault();
-      ev.stopImmediatePropagation();
+      ev.stopPropagation();
       window.quoteDraft.items.splice(index,1);
       if(typeof window.renderQuoteDraft==='function') window.renderQuoteDraft();
       setTimeout(moveSelected,0);
-    }, true);
+    });
   }
 
   function observeLayout(){
-    const modal=getModal(); if(!modal || modal.dataset.quoteLayoutObserver==='1') return;
-    modal.dataset.quoteLayoutObserver='1'; let queued=false;
+    const modal=getModal();
+    if(!modal || modal.dataset.quoteLayoutObserver==='1') return;
+    modal.dataset.quoteLayoutObserver='1';
+    let queued=false;
     const schedule=()=>{ if(queued)return; queued=true; requestAnimationFrame(()=>{queued=false; moveSelected();}); };
     new MutationObserver(schedule).observe(modal,{childList:true,subtree:true});
   }
 
   function boot(){
-    const modal=getModal(); if(!modal) return false;
-    initFilters(); cardClick(); removeFix(); observeLayout(); moveSelected(); return true;
+    const modal=getModal();
+    if(!modal) return false;
+    initFilters(); cardClick(); removeFix(); observeLayout(); moveSelected();
+    return true;
   }
   function start(){
     if(boot()) return;
