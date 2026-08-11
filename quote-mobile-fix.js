@@ -40,8 +40,8 @@
 
   function quoteUnit(item){
     const text = `${item?.product_name||''} ${item?.product_model||''}`.toLocaleLowerCase('tr-TR');
-    const category = String(item?.category||'').toLocaleLowerCase('tr-TR');
-    if(category.includes('kablo kanalı') || category.includes('kablo kanali') || category==='kablo' || text.includes('kablo kanalı') || text.includes('kablo kanali')) return 'mt';
+    if(/kablolu\s*bnc/.test(text) || /kablo\s*test/.test(text) || /kablo\s*test\s*cihaz/.test(text)) return 'Adet';
+    if(/kablo\s*kanal/.test(text) || /kablo/.test(text)) return 'mt';
     return 'Adet';
   }
 
