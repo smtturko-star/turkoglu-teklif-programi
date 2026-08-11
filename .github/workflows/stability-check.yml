@@ -1,0 +1,44 @@
+name: Stability check
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  javascript-syntax:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Check standalone JavaScript files
+        run: |
+          set -e
+          for f in *.js; do
+            [ -f "$f" ] || continue
+            echo "Checking $f"
+            node --check "$f"
+          done
+      - name: Check inline JavaScript in index.html
+        run: |
+          python3 - <<'PY'
+          import re, pathlib, subprocess, tempfile
+          html=pathlib.Path('index.html').read_text(encoding='utf-8')
+          scripts=re.findall(r'<script(?![^>]*src=)[^>]*>(.*?)</script>', html, re.I|re.S)
+          for i, code in enumerate(scripts, 1):
+              if not code.strip():
+                  continue
+              p=pathlib.Path(tempfile.gettempdir())/f'inline-{i}.js'
+              p.write_text(code, encoding='utf-8')
+              subprocess.run(['node','--check',str(p)],check=True)
+          print(f'Checked {len(scripts)} inline script blocks')
+          PY
+      - name: Ensure automatic camera combination is absent
+        run: |
+          if grep -RniE 'quoteComboWizard|buildCombo|openComboWizard|Kamera kombinasyon sihirbazi' -- *.js index.html 2>/dev/null; then
+            echo 'Automatic camera combination code is still present.'
+            exit 1
+          fi
+          echo 'Automatic camera combination code is absent.'
