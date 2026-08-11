@@ -20,6 +20,29 @@
     return list.find(p => text.includes(norm(p.name)) && (!p.model || text.includes(norm(p.model)))) || null;
   }
 
+  function isMeterProduct(p){
+    if(!p) return false;
+    const name = norm(p.name), category = norm(p.category), sub = norm(subOf(p));
+    if(/bnc/.test(name) || /konnektör|konnektor|ek|adaptör|adaptoru|bağ|bag/.test(name)) return false;
+    return /kablo\s*kanal|kablo kanali|kablo/.test(category) || /kablo\s*kanal|kablo kanali/.test(name) || /kablo\s*kanal|kablo kanali/.test(sub);
+  }
+
+  function normalizeQuoteUnits(){
+    const draft = window.quoteDraft;
+    if(!draft || !Array.isArray(draft.items)) return false;
+    let changed = false;
+    draft.items.forEach(item => {
+      const p = products().find(x => String(x.id) === String(item?.productId ?? item?.product_id ?? item?.id));
+      if(!p) return;
+      const meter = isMeterProduct(p);
+      const unit = meter ? 'mt' : (String(item.unit ?? item.birim ?? '').trim() || 'Adet');
+      if(item.unit !== unit){ item.unit = unit; changed = true; }
+      if('birim' in item && item.birim !== unit){ item.birim = unit; changed = true; }
+      if('unitType' in item && item.unitType !== unit){ item.unitType = unit; changed = true; }
+    });
+    return changed;
+  }
+
   function moveSelected(){
     const modal = getModal(), picker = getPicker();
     if(!modal || !picker) return;
@@ -179,14 +202,14 @@
     if(!modal || modal.dataset.quoteLayoutObserver==='1') return;
     modal.dataset.quoteLayoutObserver='1';
     let queued=false;
-    const schedule=()=>{ if(queued)return; queued=true; requestAnimationFrame(()=>{queued=false; moveSelected();}); };
+    const schedule=()=>{ if(queued)return; queued=true; requestAnimationFrame(()=>{queued=false; normalizeQuoteUnits(); moveSelected();}); };
     new MutationObserver(schedule).observe(modal,{childList:true,subtree:true});
   }
 
   function boot(){
     const modal=getModal();
     if(!modal) return false;
-    initFilters(); cardClick(); removeFix(); observeLayout(); moveSelected();
+    initFilters(); cardClick(); removeFix(); normalizeQuoteUnits(); observeLayout(); moveSelected();
     return true;
   }
   function start(){
