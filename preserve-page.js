@@ -1,6 +1,11 @@
-/* Türkoğlu: F5 sonrası son açık menüyü ve Ürünler filtrelerini koru. */
+/* Türkoğlu: F5 sonrası son açık menüyü ve Ürünler filtrelerini tek sefer koru. */
 (function(){
   'use strict';
+
+  // Dosya yanlışlıkla birden fazla kez yüklenirse ikinci kopya hiçbir şey yapmasın.
+  if(window.__turkogluPreservePageInstalled)return;
+  window.__turkogluPreservePageInstalled=true;
+
   const KEY='turkoglu_last_page';
   const FILTER_KEY='turkoglu_product_filters';
   const valid=new Set(['dashboard','customers','products','quotes','jobs','payments','settings','printPage']);
@@ -9,7 +14,8 @@
   let restoringFilters=false;
 
   const savePage=id=>{
-    if(valid.has(String(id))&&!restoringPage) localStorage.setItem(KEY,String(id));
+    const value=String(id);
+    if(valid.has(value)&&!restoringPage) localStorage.setItem(KEY,value);
   };
 
   function readFilters(){
@@ -17,7 +23,10 @@
     let found=false;
     filterIds.forEach(id=>{
       const el=document.getElementById(id);
-      if(el){state[id]=el.value||'';found=true;}
+      if(el){
+        state[id]=el.value||'';
+        found=true;
+      }
     });
     return found?state:null;
   }
@@ -30,37 +39,55 @@
     }catch(e){}
   }
 
-  function restoreFilters(){
+  // Filtre geri yükleme yalnızca çağıran tek akış tarafından bir kez yapılır.
+  function restoreFiltersOnce(){
     if(restoringFilters)return;
+    restoringFilters=true;
     try{
-      const state=JSON.parse(localStorage.getItem(FILTER_KEY)||'null');
-      if(!state)return;
-      restoringFilters=true;
+      const raw=localStorage.getItem(FILTER_KEY);
+      if(!raw)return;
+
+      const state=JSON.parse(raw);
+      if(!state||typeof state!=='object')return;
+
+      let changed=false;
       filterIds.forEach(id=>{
         const el=document.getElementById(id);
-        if(el&&Object.prototype.hasOwnProperty.call(state,id)){
-          const value=String(state[id]??'');
-          if(el.value!==value)el.value=value;
+        if(!el||!Object.prototype.hasOwnProperty.call(state,id))return;
+        const value=String(state[id]??'');
+        if(el.value!==value){
+          el.value=value;
+          changed=true;
         }
       });
-      if(typeof window.applyProductFilters==='function')window.applyProductFilters();
-      else document.getElementById('productSearch')?.dispatchEvent(new Event('input',{bubbles:true}));
+
+      // Değer gerçekten değiştiyse listeyi tam olarak bir kez yeniden çiz.
+      if(changed){
+        if(typeof window.renderProducts==='function'){
+          window.renderProducts();
+        }else if(typeof window.applyProductFilters==='function'){
+          window.applyProductFilters();
+        }else{
+          document.getElementById('productSearch')?.dispatchEvent(new Event('input',{bubbles:true}));
+        }
+      }
     }catch(e){}
-    finally{setTimeout(()=>{restoringFilters=false;},0);}
+    finally{
+      restoringFilters=false;
+    }
   }
 
+  // page() sadece son açık sayfayı kaydeder. Filtre geri yükleme burada YAPILMAZ.
   const original=window.page;
-  if(typeof original==='function'&&!window.__turkogluPagePersistence){
-    window.__turkogluPagePersistence=true;
+  if(typeof original==='function'){
     window.page=function(id){
       const result=original.apply(this,arguments);
       savePage(id);
-      if(String(id)==='products')setTimeout(restoreFilters,150);
       return result;
     };
   }
 
-  // Filtreleri DOM yeniden oluşturulsa bile tek bir event delegation ile kaydet.
+  // Filtreleri DOM yeniden oluşturulsa bile tek event delegation ile kaydet.
   document.addEventListener('change',e=>{
     if(filterIds.includes(e.target?.id))saveFilters();
   },true);
@@ -71,16 +98,23 @@
   function restoreLastPageOnce(){
     const wanted=localStorage.getItem(KEY);
     if(!wanted||!valid.has(wanted)||typeof window.page!=='function')return;
+
     restoringPage=true;
-    try{window.page(wanted);}catch(e){}
-    finally{restoringPage=false;}
-    if(wanted==='products')setTimeout(restoreFilters,300);
+    try{
+      window.page(wanted);
+    }catch(e){}
+    finally{
+      restoringPage=false;
+    }
+
+    // page() ile ekran açıldıktan sonra ürün filtrelerini tam bir kez uygula.
+    if(wanted==='products')setTimeout(restoreFiltersOnce,0);
   }
 
-  // Sadece bir kez çalışır. Interval/MutationObserver yok; böylece sayfa geçiş döngüsü oluşmaz.
+  // F5 başlangıç geri yüklemesi de yalnızca bir kez çalışır.
   if(document.readyState==='loading'){
-    document.addEventListener('DOMContentLoaded',()=>setTimeout(restoreLastPageOnce,700),{once:true});
+    document.addEventListener('DOMContentLoaded',restoreLastPageOnce,{once:true});
   }else{
-    setTimeout(restoreLastPageOnce,700);
+    restoreLastPageOnce();
   }
 })();
