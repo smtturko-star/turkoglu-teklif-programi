@@ -1,87 +1,75 @@
-/* Teklif ekranı: yalnızca pencere kontrolleri ve güvenli modal davranışı. */
+/* Teklif ekranı: sade, tek satır ve mevcut işlem kodlarına dokunmadan. */
 (function(){
   'use strict';
 
-  const get = id => document.getElementById(id);
+  const style = document.createElement('style');
+  style.textContent = `
+    #quoteModal #qitems th,#quoteModal #qitems td{padding:7px 6px;vertical-align:middle;}
+    #quoteModal #qitems th:nth-child(1){width:34%;}
+    #quoteModal #qitems th:nth-child(2){width:12%;}
+    #quoteModal #qitems th:nth-child(3){width:18%;}
+    #quoteModal #qitems th:nth-child(4){width:12%;}
+    #quoteModal #qitems th:nth-child(5){width:18%;}
+    #quoteModal #qitems th:nth-child(6){width:6%;}
+    #quoteModal #qitems input,#quoteModal #qitems select{box-sizing:border-box;margin:0;height:38px;}
+    #quoteModal #qitems td:nth-child(2) input{width:70px!important;max-width:100%;}
+    #quoteModal #qitems td:nth-child(3) input{width:105px!important;max-width:100%;}
+    #quoteModal #qitems td:nth-child(4) select{width:78px!important;max-width:100%;}
+    #quoteModal #qitems td:nth-child(6) button{width:34px;height:34px;padding:0;display:inline-flex;align-items:center;justify-content:center;}
+    #quoteModal #qitems .quote-unit{display:inline-block;margin-left:5px;font-weight:800;font-size:12px;color:#64748b;white-space:nowrap;}
+    @media(max-width:760px){
+      #quoteModal .modalbox{width:100%;padding:12px;}
+      #quoteModal #qitems{min-width:0;}
+      #quoteModal #qitems table{min-width:0;table-layout:fixed;}
+      #quoteModal #qitems th,#quoteModal #qitems td{padding:5px 3px;font-size:11px;}
+      #quoteModal #qitems th:nth-child(1){width:31%;}
+      #quoteModal #qitems th:nth-child(2){width:17%;}
+      #quoteModal #qitems th:nth-child(3){width:20%;}
+      #quoteModal #qitems th:nth-child(4){width:13%;}
+      #quoteModal #qitems th:nth-child(5){width:13%;}
+      #quoteModal #qitems th:nth-child(6){width:6%;}
+      #quoteModal #qitems td:nth-child(1) .muted{font-size:10px;}
+      #quoteModal #qitems td:nth-child(2) input{width:52px!important;padding:7px 5px;}
+      #quoteModal #qitems td:nth-child(3) input{width:76px!important;padding:7px 5px;}
+      #quoteModal #qitems td:nth-child(4) select{width:58px!important;padding:7px 4px;}
+      #quoteModal #qitems .quote-unit{margin-left:2px;font-size:10px;}
+      #quoteModal #qitems td:nth-child(6) button{width:28px;height:30px;}
+    }
+  `;
+  document.head.appendChild(style);
 
-  function isQuoteModal(modal){
-    if(!modal) return false;
-    return !!modal.querySelector('#qitems') || /teklif/i.test(modal.querySelector('.modalhead h2')?.textContent || '');
+  function quoteUnit(item){
+    const text = `${item?.product_name||''} ${item?.product_model||''}`.toLocaleLowerCase('tr-TR');
+    const category = String(item?.category||'').toLocaleLowerCase('tr-TR');
+    if(category.includes('kablo kanalı') || category.includes('kablo kanali') || category==='kablo' || text.includes('kablo kanalı') || text.includes('kablo kanali')) return 'mt';
+    return 'Adet';
   }
 
-  function installOverlayGuard(){
-    const overlay = get('modal');
-    if(!overlay || overlay.dataset.quoteOverlayGuard === '1') return;
-    overlay.dataset.quoteOverlayGuard = '1';
-    overlay.addEventListener('click', ev => {
-      const modal = get('modalBox');
-      if(isQuoteModal(modal) && ev.target === overlay){
-        ev.preventDefault();
-        ev.stopPropagation();
-        ev.stopImmediatePropagation();
-      }
-    }, true);
+  function install(){
+    if(typeof window.renderQuoteDraft !== 'function' || window.renderQuoteDraft.__compactUnitFix) return;
+    const original = window.renderQuoteDraft;
+    function wrappedRenderQuoteDraft(){
+      original.apply(this, arguments);
+      const items = window.quoteDraft?.items || [];
+      const rows = document.querySelectorAll('#qitems tr');
+      rows.forEach((row,index)=>{
+        const input = row.querySelector('td:nth-child(2) input');
+        if(!input || !items[index]) return;
+        const cell = input.parentElement;
+        let unit = cell.querySelector('.quote-unit');
+        if(!unit){
+          unit = document.createElement('span');
+          unit.className='quote-unit';
+          cell.appendChild(unit);
+        }
+        unit.textContent = quoteUnit(items[index]);
+      });
+    }
+    wrappedRenderQuoteDraft.__compactUnitFix = true;
+    window.renderQuoteDraft = wrappedRenderQuoteDraft;
   }
 
-  function installWindowControls(){
-    const modal = get('modalBox');
-    if(!modal || !isQuoteModal(modal)) return;
-    const head = modal.querySelector('.modalhead');
-    const close = head?.querySelector('.close');
-    if(!head || !close || head.dataset.quoteWindowControls === '1') return;
-
-    head.dataset.quoteWindowControls = '1';
-    const overlay = get('modal');
-    const actions = document.createElement('div');
-    actions.className = 'quote-window-actions';
-    actions.style.cssText = 'display:flex;gap:6px;margin-left:auto;margin-right:8px;align-items:center';
-    actions.innerHTML = '<button type="button" class="light" title="Küçült" aria-label="Küçült" style="width:36px;height:36px;padding:0;font-size:18px">−</button><button type="button" class="light" title="Büyüt" aria-label="Büyüt" style="width:36px;height:36px;padding:0;font-size:17px">⛶</button>';
-    head.insertBefore(actions, close);
-
-    const minBtn = actions.children[0];
-    const maxBtn = actions.children[1];
-
-    minBtn.addEventListener('click', ev => {
-      ev.preventDefault();
-      ev.stopPropagation();
-      overlay?.classList.add('quote-minimized');
-      modal.classList.add('quote-minimized-box');
-      let bar = get('quoteMinimizedBar');
-      if(!bar){
-        bar = document.createElement('button');
-        bar.id = 'quoteMinimizedBar';
-        bar.type = 'button';
-        bar.textContent = '🧾 Teklif — devam et';
-        bar.title = 'Teklifi geri aç';
-        bar.style.cssText = 'position:fixed;right:18px;bottom:18px;z-index:10000;background:#0f172a;color:#fff;border:0;border-radius:12px;padding:11px 16px;font-weight:800;box-shadow:0 8px 24px #0003';
-        document.body.appendChild(bar);
-        bar.addEventListener('click', ev2 => {
-          ev2.preventDefault();
-          ev2.stopPropagation();
-          overlay?.classList.remove('quote-minimized');
-          modal.classList.remove('quote-minimized-box');
-          bar.remove();
-        }, {once:false});
-      }
-    });
-
-    maxBtn.addEventListener('click', ev => {
-      ev.preventDefault();
-      ev.stopPropagation();
-      modal.classList.toggle('quote-maximized-box');
-    });
-  }
-
-  const boot = () => {
-    installOverlayGuard();
-    installWindowControls();
-  };
-
-  boot();
-  let ticks = 0;
-  const timer = setInterval(() => {
-    boot();
-    ticks += 1;
-    if(ticks >= 120) clearInterval(timer);
-  }, 250);
+  install();
+  setTimeout(install,100);
+  setTimeout(install,500);
 })();
