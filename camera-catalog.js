@@ -75,9 +75,20 @@
      Mevcut ürünleri kullanır; yeni ürün veya veritabanı tablosu oluşturmaz.
      4/8/16 kamera + Ekonomik/Orta/Profesyonel seçenekleri verir.
   --------------------------------------------------------- */
-  const allProducts=()=>Array.isArray(window.products)?window.products:[];
+  const domProducts=()=>[...document.querySelectorAll('#quoteProducts .p')].map(card=>{
+    const raw=card.getAttribute('onclick')||'';
+    const m=raw.match(/addQuoteItem\s*\(\s*['\"]?([^'\")]+)['\"]?\s*\)/i);
+    const lines=[...card.querySelectorAll('b,small')].map(x=>x.textContent.trim()).filter(Boolean);
+    const name=lines[0]||card.textContent.trim().split('\n')[0]||'';
+    const model=lines[1]||'';
+    const txt=norm(card.textContent);
+    const pm=card.textContent.match(/(?:₺|TL)\s*([\d.,]+)/i)||card.textContent.match(/([\d.]+,[\d]{2})\s*(?:₺|TL)/i);
+    const sale_price=pm?Number(String(pm[1]).replace(/\./g,'').replace(',','.')):0;
+    return {id:m?m[1]:'',name,model,category:'',brand:'',stock:1000,sale_price};
+  }).filter(p=>p.id&&p.name);
+  const allProducts=()=>Array.isArray(window.products)&&window.products.length?window.products:domProducts();
   const text=p=>norm(`${p?.name||''} ${p?.model||''} ${p?.category||''} ${p?.subcategory||''}`);
-  const stock=p=>Number(p?.stock??0)||0;
+  const stock=p=>Number(p?.stock??1000)||0;
   const compatible=(p,words)=>words.some(w=>text(p).includes(norm(w)));
   const tierIndex=(tier,n)=>tier==='economic'?0:tier==='premium'?Math.max(0,n-1):Math.floor((n-1)/2);
 
