@@ -1,6 +1,8 @@
 name: Stability check
 
 on:
+  push:
+    branches: [main]
   pull_request:
     branches: [main]
   workflow_dispatch:
@@ -37,7 +39,7 @@ jobs:
           PY
       - name: Ensure automatic camera combination is absent
         run: |
-          if grep -RniE 'quoteComboWizard|buildCombo|openComboWizard|Kamera kombinasyon sihirbazi' -- *.js index.html 2>/dev/null; then
+          if grep -RniE 'quoteComboWizard|buildCombo|openComboWizard|Kamera kombinasyon sihirbazi|Ekonomik|Profesyonel' -- *.js index.html 2>/dev/null; then
             echo 'Automatic camera combination code is still present.'
             exit 1
           fi
