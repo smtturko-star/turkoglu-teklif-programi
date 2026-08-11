@@ -41,7 +41,10 @@
       if(p) return p;
     }
     const text = norm(row?.textContent || '');
-    return list.find(p => text.includes(norm(p.name)) && (!p.model || text.includes(norm(p.model)))) || null;
+    const found = list.find(p => text.includes(norm(p.name)) && (!p.model || text.includes(norm(p.model))));
+    if(found) return found;
+    const firstCell = row?.querySelector('td');
+    return firstCell ? {name:firstCell.textContent, model:''} : null;
   }
 
   function moveSelected(){
@@ -176,7 +179,6 @@
     });
   }
 
-  /* Teklif kalemi silme: tek event sahibi. Capture kullanılmaz; mevcut satır davranışını ezmez. */
   function removeFix(){
     const modal=getModal();
     if(!modal || modal.dataset.quoteRemoveFix==='1') return;
@@ -198,17 +200,16 @@
     });
   }
 
-  /* Teklif içindeki alanlar: modalın kapanma mekanizmasına ve üst click handler'larına ulaşmaz. */
   function protectQuoteFields(){
     const modal=getModal();
     if(!modal || modal.dataset.quoteFieldFix==='1') return;
     modal.dataset.quoteFieldFix='1';
-    const stop = ev => {
+    /* Kritik düzeltme: alanları capture aşamasında durdurmak input/select hedef olaylarını engelliyordu.
+       Artık yalnızca click bubble aşamasında modal dışındaki click zincirini kesiyoruz. */
+    modal.addEventListener('click', ev => {
       const target = ev.target.closest('#qitems input,#qitems select,#qitems textarea,#qitems button');
-      if(!target) return;
-      ev.stopPropagation();
-    };
-    ['pointerdown','mousedown','click','touchstart'].forEach(type => modal.addEventListener(type, stop, true));
+      if(target) ev.stopPropagation();
+    }, false);
 
     const syncUnits = () => {
       const rows = [...modal.querySelectorAll('#qitems tr')];
@@ -217,14 +218,6 @@
         if(!p) return;
         const meter = isMeterProduct(p);
         row.dataset.quoteUnit = meter ? 'mt' : 'Adet';
-        row.querySelectorAll('select').forEach(sel => {
-          const opts = [...sel.options].map(o => norm(o.textContent));
-          const hasUnitOptions = opts.some(v => /adet|mt|metre|meter/.test(v));
-          if(!hasUnitOptions) return;
-          const wanted = meter ? ['mt','metre','meter'] : ['adet'];
-          const option = [...sel.options].find(o => wanted.includes(norm(o.textContent)) || wanted.includes(norm(o.value)));
-          if(option && sel.value !== option.value) sel.value = option.value;
-        });
         const number = row.querySelector('input[type="number"]');
         if(number){
           const holder = number.parentElement;
@@ -242,39 +235,17 @@
           }
         }
       });
-      syncPrintUnits();
-    };
-
-    const syncPrintUnits = () => {
-      const root=document.getElementById('printPage') || document;
-      root.querySelectorAll('table').forEach(table => {
-        const headers=[...table.querySelectorAll('thead th')].map(th=>norm(th.textContent));
-        const qtyIndex=headers.findIndex(h=>h==='adet'||h==='miktar'||h.includes('miktar'));
-        if(qtyIndex<0) return;
-        [...table.querySelectorAll('tbody tr')].forEach(row=>{
-          const p=findRowProduct(row);
-          if(!p || !isMeterProduct(p)) return;
-          const cell=row.children[qtyIndex];
-          if(!cell || cell.dataset.quoteUnitDone==='1') return;
-          const raw=cell.textContent.trim();
-          if(!raw || /mt$/i.test(raw)) return;
-          cell.textContent=raw+' mt';
-          cell.dataset.quoteUnitDone='1';
-        });
-      });
     };
 
     modal.addEventListener('input', ev => {
       if(ev.target.closest('#qitems')) setTimeout(syncUnits,0);
-    }, true);
+    }, false);
     modal.addEventListener('change', ev => {
       if(ev.target.closest('#qitems')) setTimeout(syncUnits,0);
-    }, true);
+    }, false);
 
     const observer=new MutationObserver(()=>syncUnits());
     observer.observe(modal,{childList:true,subtree:true});
-    const printObserver=new MutationObserver(()=>syncPrintUnits());
-    printObserver.observe(document.body,{childList:true,subtree:true});
     syncUnits();
   }
 
