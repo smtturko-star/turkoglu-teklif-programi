@@ -1,0 +1,9 @@
+/* Teklif satırları: tüm temel işlemler aynı satırda, ekranda sabit ve sade. */
+#quoteModal #qitems{display:flex;flex-direction:column;gap:8px;}
+#quoteModal #qitems .quote-item-row{display:grid;grid-template-columns:minmax(180px,1fr) 82px 120px 82px 105px 36px;align-items:center;gap:8px;}
+#quoteModal #qitems input,#quoteModal #qitems select{min-width:0;width:100%;box-sizing:border-box;}
+#quoteModal #qitems .quote-item-row .remove-item,#quoteModal #qitems .quote-item-row button[onclick*="removeQuoteItem"]{width:32px;height:32px;padding:0;display:inline-flex;align-items:center;justify-content:center;margin:0;}
+@media (max-width:760px){
+  #quoteModal #qitems .quote-item-row{grid-template-columns:minmax(150px,1fr) 68px 96px 68px 88px 32px;gap:5px;}
+  #quoteModal #qitems{gap:6px;}
+}
