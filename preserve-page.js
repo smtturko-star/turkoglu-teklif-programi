@@ -20,3 +20,4 @@
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(restore,50),{once:true});
   else setTimeout(restore,50);
 })();
+// attachment workflow trigger
