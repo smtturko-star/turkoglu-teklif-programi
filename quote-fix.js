@@ -5,6 +5,18 @@
   const norm = v => String(v ?? '').trim().toLocaleLowerCase('tr-TR');
   const products = () => Array.isArray(window.products) ? window.products : [];
   const subOf = p => String(p?.subcategory ?? p?.sub_category ?? p?.altCategory ?? p?.alt_category ?? p?.altKategori ?? '').trim();
+  const unitOf = p => norm(p?.unit ?? p?.birim ?? p?.unit_name ?? p?.unitName ?? p?.olcuBirimi ?? '');
+  const isMeterProduct = p => {
+    if(!p) return false;
+    const u = unitOf(p);
+    if(/metre|meter|^mt$|^m$/.test(u)) return true;
+    const name = norm(p?.name);
+    const cat = norm(p?.category);
+    if(/kablo kanalı|kablo kanali/.test(name)) return true;
+    if(/kablo/.test(name) && !/bnc/.test(name)) return true;
+    if(/kablo|kablo kanalı|kablo kanali/.test(cat) && !/bnc/.test(name)) return true;
+    return false;
+  };
   const getModal = () => document.getElementById('modalBox');
   const getOverlay = () => document.getElementById('modal');
   const getPicker = () => document.getElementById('quoteProducts');
@@ -18,6 +30,17 @@
       if(p) return p;
     }
     const text = norm(card?.textContent);
+    return list.find(p => text.includes(norm(p.name)) && (!p.model || text.includes(norm(p.model)))) || null;
+  }
+
+  function findRowProduct(row){
+    const list = products();
+    const id = row?.dataset?.productId || row?.getAttribute('data-product-id');
+    if(id){
+      const p = list.find(x => String(x.id) === String(id));
+      if(p) return p;
+    }
+    const text = norm(row?.textContent || '');
     return list.find(p => text.includes(norm(p.name)) && (!p.model || text.includes(norm(p.model)))) || null;
   }
 
@@ -175,12 +198,90 @@
     });
   }
 
+  /* Teklif içindeki alanlar: modalın kapanma mekanizmasına ve üst click handler'larına ulaşmaz. */
+  function protectQuoteFields(){
+    const modal=getModal();
+    if(!modal || modal.dataset.quoteFieldFix==='1') return;
+    modal.dataset.quoteFieldFix='1';
+    const stop = ev => {
+      const target = ev.target.closest('#qitems input,#qitems select,#qitems textarea,#qitems button');
+      if(!target) return;
+      ev.stopPropagation();
+    };
+    ['pointerdown','mousedown','click','touchstart'].forEach(type => modal.addEventListener(type, stop, true));
+
+    const syncUnits = () => {
+      const rows = [...modal.querySelectorAll('#qitems tr')];
+      rows.forEach(row => {
+        const p = findRowProduct(row);
+        if(!p) return;
+        const meter = isMeterProduct(p);
+        row.dataset.quoteUnit = meter ? 'mt' : 'Adet';
+        row.querySelectorAll('select').forEach(sel => {
+          const opts = [...sel.options].map(o => norm(o.textContent));
+          const hasUnitOptions = opts.some(v => /adet|mt|metre|meter/.test(v));
+          if(!hasUnitOptions) return;
+          const wanted = meter ? ['mt','metre','meter'] : ['adet'];
+          const option = [...sel.options].find(o => wanted.includes(norm(o.textContent)) || wanted.includes(norm(o.value)));
+          if(option && sel.value !== option.value) sel.value = option.value;
+        });
+        const number = row.querySelector('input[type="number"]');
+        if(number){
+          const holder = number.parentElement;
+          if(holder && !holder.querySelector('.quote-unit-suffix')){
+            const suffix = document.createElement('span');
+            suffix.className='quote-unit-suffix';
+            suffix.textContent=meter?'mt':'Adet';
+            suffix.style.cssText='margin-left:6px;font-weight:800;color:#0f766e;white-space:nowrap';
+            holder.style.display='flex';
+            holder.style.alignItems='center';
+            holder.appendChild(suffix);
+          } else if(holder){
+            const suffix=holder.querySelector('.quote-unit-suffix');
+            if(suffix) suffix.textContent=meter?'mt':'Adet';
+          }
+        }
+      });
+      syncPrintUnits();
+    };
+
+    const syncPrintUnits = () => {
+      const root=document.getElementById('printPage') || document;
+      root.querySelectorAll('table').forEach(table => {
+        const headers=[...table.querySelectorAll('thead th')].map(th=>norm(th.textContent));
+        const qtyIndex=headers.findIndex(h=>h==='adet'||h==='miktar'||h.includes('miktar'));
+        if(qtyIndex<0) return;
+        [...table.querySelectorAll('tbody tr')].forEach(row=>{
+          const p=findRowProduct(row);
+          if(!p || !isMeterProduct(p)) return;
+          const cell=row.children[qtyIndex];
+          if(!cell || cell.dataset.quoteUnitDone==='1') return;
+          const raw=cell.textContent.trim();
+          if(!raw || /mt$/i.test(raw)) return;
+          cell.textContent=raw+' mt';
+          cell.dataset.quoteUnitDone='1';
+        });
+      });
+    };
+
+    modal.addEventListener('input', ev => {
+      if(ev.target.closest('#qitems')) setTimeout(syncUnits,0);
+    }, true);
+    modal.addEventListener('change', ev => {
+      if(ev.target.closest('#qitems')) setTimeout(syncUnits,0);
+    }, true);
+
+    const observer=new MutationObserver(()=>syncUnits());
+    observer.observe(modal,{childList:true,subtree:true});
+    const printObserver=new MutationObserver(()=>syncPrintUnits());
+    printObserver.observe(document.body,{childList:true,subtree:true});
+    syncUnits();
+  }
+
   function installQuoteWindow(){
     const modal=getModal(), overlay=getOverlay();
     if(!modal || !overlay || modal.dataset.quoteWindowInit==='1') return;
     modal.dataset.quoteWindowInit='1';
-
-    /* Boş karartılmış alana tıklamak teklifi kapatmaz. Kapatma yalnızca X/İptal ile yapılır. */
     overlay.addEventListener('click', ev => {
       if(ev.target === overlay){
         ev.preventDefault();
@@ -188,7 +289,6 @@
         ev.stopImmediatePropagation();
       }
     }, true);
-
     const addControls = () => {
       const head=modal.querySelector('.modalhead');
       const title=head?.querySelector('h2');
@@ -196,14 +296,12 @@
       const isQuote=/teklif/i.test(title.textContent||'') || !!modal.querySelector('#qitems');
       if(!isQuote || head.dataset.quoteWindowControls==='1') return;
       head.dataset.quoteWindowControls='1';
-
       const actions=document.createElement('div');
       actions.className='quote-window-actions';
       actions.style.cssText='display:flex;gap:6px;margin-left:auto;margin-right:8px;align-items:center';
       actions.innerHTML='<button type="button" class="light" title="Küçült" aria-label="Küçült" style="width:36px;height:36px;padding:0;font-size:18px">−</button><button type="button" class="light" title="Büyüt" aria-label="Büyüt" style="width:36px;height:36px;padding:0;font-size:17px">⛶</button>';
       const close=head.querySelector('.close');
       head.insertBefore(actions,close||null);
-
       const minBtn=actions.children[0], maxBtn=actions.children[1];
       minBtn.addEventListener('click', ev => {
         ev.preventDefault(); ev.stopPropagation();
@@ -212,26 +310,14 @@
         let bar=document.getElementById('quoteMinimizedBar');
         if(!bar){
           bar=document.createElement('button');
-          bar.id='quoteMinimizedBar';
-          bar.type='button';
-          bar.textContent='🧾 Teklif — devam et';
-          bar.title='Teklifi geri aç';
+          bar.id='quoteMinimizedBar'; bar.type='button'; bar.textContent='🧾 Teklif — devam et'; bar.title='Teklifi geri aç';
           bar.style.cssText='position:fixed;right:18px;bottom:18px;z-index:10000;background:#0f172a;color:#fff;border:0;border-radius:12px;padding:11px 16px;font-weight:800;box-shadow:0 8px 24px #0003';
           document.body.appendChild(bar);
-          bar.addEventListener('click',()=>{
-            overlay.classList.remove('quote-minimized');
-            modal.classList.remove('quote-minimized-box');
-            bar.remove();
-          });
+          bar.addEventListener('click',()=>{ overlay.classList.remove('quote-minimized'); modal.classList.remove('quote-minimized-box'); bar.remove(); });
         }
       });
-      maxBtn.addEventListener('click', ev => {
-        ev.preventDefault(); ev.stopPropagation();
-        modal.classList.toggle('quote-maximized-box');
-        maxBtn.textContent=modal.classList.contains('quote-maximized-box')?'⛶':'⛶';
-      });
+      maxBtn.addEventListener('click', ev => { ev.preventDefault(); ev.stopPropagation(); modal.classList.toggle('quote-maximized-box'); });
     };
-
     addControls();
     const observer=new MutationObserver(addControls);
     observer.observe(modal,{childList:true,subtree:true});
@@ -241,7 +327,7 @@
     if(document.getElementById('quoteWindowStyles')) return;
     const style=document.createElement('style');
     style.id='quoteWindowStyles';
-    style.textContent='.modal:has(.quote-minimized-box){background:transparent!important;pointer-events:none}.modal .quote-minimized-box{display:none!important}.modal .quote-maximized-box{width:calc(100vw - 28px)!important;max-width:none!important;height:calc(100vh - 28px)!important;max-height:none!important}.modal .quote-maximized-box{pointer-events:auto}.modal:has(.quote-maximized-box){padding:14px}.modal:has(.quote-maximized-box) .quote-maximized-box{overflow:auto}';
+    style.textContent='.modal:has(.quote-minimized-box){background:transparent!important;pointer-events:none}.modal .quote-minimized-box{display:none!important}.modal .quote-maximized-box{width:calc(100vw - 28px)!important;max-width:none!important;height:calc(100vh - 28px)!important;max-height:none!important}.modal .quote-maximized-box{pointer-events:auto}.modal:has(.quote-maximized-box){padding:14px}.modal:has(.quote-maximized-box) .quote-maximized-box{overflow:auto}.quote-unit-suffix{font-size:12px}';
     document.head.appendChild(style);
   }
 
@@ -250,7 +336,7 @@
     if(!modal || modal.dataset.quoteLayoutObserver==='1') return;
     modal.dataset.quoteLayoutObserver='1';
     let queued=false;
-    const schedule=()=>{ if(queued)return; queued=true; requestAnimationFrame(()=>{queued=false; moveSelected(); installQuoteWindow();}); };
+    const schedule=()=>{ if(queued)return; queued=true; requestAnimationFrame(()=>{queued=false; moveSelected(); installQuoteWindow(); protectQuoteFields();}); };
     new MutationObserver(schedule).observe(modal,{childList:true,subtree:true});
   }
 
@@ -258,7 +344,7 @@
     const modal=getModal();
     if(!modal) return false;
     addQuoteWindowStyles();
-    initFilters(); cardClick(); removeFix(); installQuoteWindow(); observeLayout(); moveSelected();
+    initFilters(); cardClick(); removeFix(); installQuoteWindow(); protectQuoteFields(); observeLayout(); moveSelected();
     return true;
   }
   function start(){
