@@ -44,4 +44,94 @@
   installStyle();
   window.addEventListener('beforeprint',beforePrint);
   window.addEventListener('afterprint',afterPrint);
+
+  // Ürün Ekle / Ürün Düzenle penceresine Teklifler'deki gibi pencere kontrolleri.
+  // Filtreleme, preserve-page.js ve ürün listeleme mantığına dokunmaz.
+  const PRODUCT_STYLE_ID='turkoglu-product-window-style';
+  const MIN_BAR_ID='productMinimizedBar';
+
+  function installProductWindowStyle(){
+    if(document.getElementById(PRODUCT_STYLE_ID))return;
+    const style=document.createElement('style');
+    style.id=PRODUCT_STYLE_ID;
+    style.textContent=`
+      .modalbox.product-window-maximized{
+        width:calc(100vw - 36px) !important;
+        max-width:none !important;
+        height:calc(100vh - 36px) !important;
+        max-height:none !important;
+        border-radius:12px !important;
+      }
+      .modalbox.product-window-minimized{display:none !important;}
+      .product-window-actions{display:flex;gap:5px;margin-left:auto;margin-right:8px;align-items:center;}
+      .product-window-actions button{width:34px;height:34px;padding:0;border-radius:8px;background:#eef2f7;color:#111827;font-size:17px;line-height:1;}
+      .product-window-actions button:hover{background:#e2e8f0;}
+      #${MIN_BAR_ID}{position:fixed;right:18px;bottom:18px;z-index:10000;background:#0f172a;color:#fff;border:0;border-radius:12px;padding:11px 16px;font-weight:800;box-shadow:0 8px 24px #0003;cursor:pointer;}
+      @media(max-width:650px){
+        .modalbox.product-window-maximized{width:100vw !important;height:100vh !important;max-height:none !important;border-radius:0 !important;}
+        .product-window-actions{gap:3px;margin-right:5px;}
+        .product-window-actions button{width:32px;height:32px;}
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  function removeMinimizedBar(){
+    document.getElementById(MIN_BAR_ID)?.remove();
+  }
+
+  function isProductModal(modalBox){
+    const title=modalBox?.querySelector('.modalhead h2')?.textContent||'';
+    return /Ürün/i.test(title);
+  }
+
+  function addProductWindowControls(){
+    const overlay=document.getElementById('modal');
+    const box=document.getElementById('modalBox');
+    if(!overlay||!box||!overlay.classList.contains('show')||!isProductModal(box))return;
+    const head=box.querySelector('.modalhead');
+    const close=head?.querySelector('.close');
+    if(!head||!close||head.dataset.productWindowControls==='1')return;
+
+    head.dataset.productWindowControls='1';
+    const actions=document.createElement('div');
+    actions.className='product-window-actions';
+    actions.innerHTML='<button type="button" title="Küçült" aria-label="Küçült">−</button><button type="button" title="Büyüt" aria-label="Büyüt">⛶</button>';
+    head.insertBefore(actions,close);
+
+    const minBtn=actions.children[0];
+    const maxBtn=actions.children[1];
+
+    minBtn.addEventListener('click',function(ev){
+      ev.preventDefault();
+      ev.stopPropagation();
+      box.classList.add('product-window-minimized');
+      box.classList.remove('product-window-maximized');
+      removeMinimizedBar();
+      const bar=document.createElement('button');
+      bar.id=MIN_BAR_ID;
+      bar.type='button';
+      bar.textContent='📦 Ürün Ekle — devam et';
+      bar.title='Ürün penceresini geri aç';
+      document.body.appendChild(bar);
+      bar.addEventListener('click',function(){
+        box.classList.remove('product-window-minimized');
+        bar.remove();
+      });
+    });
+
+    maxBtn.addEventListener('click',function(ev){
+      ev.preventDefault();
+      ev.stopPropagation();
+      box.classList.toggle('product-window-maximized');
+    });
+  }
+
+  installProductWindowStyle();
+  const observer=new MutationObserver(function(){
+    addProductWindowControls();
+    const overlay=document.getElementById('modal');
+    if(overlay&&!overlay.classList.contains('show'))removeMinimizedBar();
+  });
+  observer.observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['class']});
 })();
