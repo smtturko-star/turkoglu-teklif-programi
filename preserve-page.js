@@ -65,6 +65,19 @@
     };
   }
 
+  // Ürün filtreleri camera-details.js tarafından dinamik eklendiği için, veri satırları
+  // çizilir çizilmez onları kurup geri yükle. Böylece varsayılan liste ekrana uğramaz.
+  const originalRenderProducts=window.renderProducts;
+  if(typeof originalRenderProducts==='function'&&!window.__turkogluProductViewStateRender){
+    window.__turkogluProductViewStateRender=true;
+    window.renderProducts=function(){
+      const result=originalRenderProducts.apply(this,arguments);
+      if(typeof window.productPage==='function')window.productPage();
+      restoreControls();
+      return result;
+    };
+  }
+
   document.addEventListener('input',event=>saveControl(event.target),true);
   document.addEventListener('change',event=>saveControl(event.target),true);
 
