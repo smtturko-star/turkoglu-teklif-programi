@@ -33,17 +33,27 @@
     state.page=id;
     write(state);
   };
-  const restoreControls=state=>{
-    const controls=state.controls&&typeof state.controls==='object'?state.controls:{};
+  const hydratedControls=new WeakSet();
+  const restoreControls=()=>{
+    const state=read(),controls=state.controls&&typeof state.controls==='object'?state.controls:{},changed=[];
     Object.entries(controls).forEach(([id,saved])=>{
       const element=document.getElementById(id);
-      if(!element||!isViewControl(element)||saved?.page!==element.closest('.page').id)return;
+      if(!element||hydratedControls.has(element)||!isViewControl(element)||saved?.page!==element.closest('.page').id)return;
+      const value=String(saved.value??'');
       if(element.type==='checkbox'){
-        element.checked=Boolean(saved.value);
-      }else if(element.tagName!=='SELECT'||Array.from(element.options).some(option=>option.value===String(saved.value))){
-        element.value=String(saved.value??'');
+        if(element.checked!==Boolean(saved.value)){element.checked=Boolean(saved.value);changed.push(element)}
+        hydratedControls.add(element);
+        return;
       }
+      if(element.tagName==='SELECT'&&!Array.from(element.options).some(option=>option.value===value)){
+        // Dinamik select'in seçenekleri henüz yüklenmediyse sonraki DOM güncellemesini bekle.
+        if(element.options.length>1)hydratedControls.add(element);
+        return;
+      }
+      if(element.value!==value){element.value=value;changed.push(element)}
+      hydratedControls.add(element);
     });
+    changed.forEach(element=>element.dispatchEvent(new Event(element.tagName==='INPUT'?'input':'change',{bubbles:true})));
   };
 
   const originalPage=window.page;
@@ -60,10 +70,15 @@
 
   const restore=()=>{
     const state=read();
-    restoreControls(state);
+    restoreControls();
     if(pageIds.has(state.page)&&typeof window.page==='function')window.page(state.page);
   };
+
+  // Marka/Kategori gibi sonradan oluşturulan filtreler, seçenekleri hazır olana kadar
+  // bekletilir ve gerçek input/change akışı üzerinden yalnızca bir kez uygulanır.
+  new MutationObserver(restoreControls).observe(document.documentElement,{childList:true,subtree:true});
 
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',restore,{once:true});
   else restore();
 })();
+
