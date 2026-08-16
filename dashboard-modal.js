@@ -4,10 +4,9 @@
   if(window.__turkogluDashboardModalInstalled)return;
   window.__turkogluDashboardModalInstalled=true;
 
-  const escSafe=s=>typeof window.esc==='function'?window.esc(s):String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
-  const moneySafe=n=>typeof window.money==='function'?window.money(n):new Intl.NumberFormat('tr-TR',{style:'currency',currency:'TRY'}).format(Number(n)||0);
-  const arr=name=>Array.isArray(window[name])?window[name]:[];
-  const byId=(id,name)=>arr(name).find(x=>x.id===id);
+  const escSafe=s=>typeof esc==='function'?esc(s):String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
+  const moneySafe=n=>typeof money==='function'?money(n):new Intl.NumberFormat('tr-TR',{style:'currency',currency:'TRY'}).format(Number(n)||0);
+  const arr=name=>name==='customers'?(typeof customers!=='undefined'?customers:[]):name==='products'?(typeof products!=='undefined'?products:[]):name==='quotes'?(typeof quotes!=='undefined'?quotes:[]):name==='jobs'?(typeof jobs!=='undefined'?jobs:[]):name==='payments'?(typeof payments!=='undefined'?payments:[]):[];
 
   const ensureStyles=()=>{
     if(document.getElementById('tk-dashboard-modal-style'))return;
@@ -50,21 +49,19 @@
   const close=()=>{const o=document.getElementById('tkDashboardOverlay');if(o)o.classList.remove('show')};
   window.tkDashboardClose=close;
 
-  const go=(pageId)=>{close();if(typeof window.page==='function')window.page(pageId)};
   const action=(type,id)=>{
     close();
     requestAnimationFrame(()=>{
       try{
-        if(type==='customer'&&typeof window.customerModal==='function')window.customerModal(id||null);
-        else if(type==='product'&&typeof window.productModal==='function')window.productModal(id||null);
-        else if(type==='quote'&&typeof window.openQuote==='function')window.openQuote(id,false);
-        else if(type==='job'&&typeof window.jobModal==='function')window.jobModal(id||null);
-        else if(type==='payment'&&typeof window.paymentModal==='function')window.paymentModal();
+        if(type==='customer'&&typeof customerModal==='function')customerModal(id||null);
+        else if(type==='product'&&typeof productModal==='function')productModal(id||null);
+        else if(type==='quote'&&typeof openQuote==='function')openQuote(id,false);
+        else if(type==='job'&&typeof jobModal==='function')jobModal(id||null);
+        else if(type==='payment'&&typeof paymentModal==='function')paymentModal();
       }catch(err){console.error(err)}
     });
   };
   const button=(label,fn,primary=false)=>`<button class="${primary?'green':'light'}" type="button" onclick="${fn}">${escSafe(label)}</button>`;
-  const status=s=>`<span class="badge">${escSafe(s||'')}</span>`;
 
   function render(type){
     const titleMap={customers:'Müşteriler',products:'Ürünler',quotes:'Teklifler',jobs:'Açık İşler',payments:'Bekleyen Tahsilatlar',completed:'Tamamlanan İşler',waiting:'Bekleyen Teklifler',lowstock:'Düşük Stok'};
