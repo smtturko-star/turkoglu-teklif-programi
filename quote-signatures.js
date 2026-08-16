@@ -3,7 +3,7 @@
   'use strict';
   if(window.__tkQuoteSignaturesInstalled)return;
   window.__tkQuoteSignaturesInstalled=true;
-  const esc=s=>typeof window.esc==='function'?window.esc(s):String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
+  const esc=s=>typeof window.esc==='function'?window.esc(s):String(s??'').replace(/[&<>\"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#039;'}[m]));
   const FIRMA={line:'Güvenlik Kamera ve Elektrik Sistemleri',phone:'0533 929 37 79',email:'turkogluguvenlik3838@gmail.com',slogan:'Güvenli Yarınlar İçin, Doğru Çözüm!'};
   function install(){
     if(document.getElementById('tk-quote-signature-style'))return;
@@ -40,7 +40,7 @@
       <div class="tk-sign-box">
         <div class="tk-sign-title">Firma Kaşe / İmza</div>
         <div class="tk-sign-sub">Teklif firma yetkilisi tarafından onaylanmıştır.</div>
-        <img class="tk-exact-stamp" src="./tk-stamp-signature-approved.png?v=1" alt="TÜRKOĞLU ELEKTRİK ELEKTRONİK kaşe ve imza">
+        <img class="tk-exact-stamp" src="/assets/turkoglu-kase-imza.jpg?v=2" alt="TÜRKOĞLU ELEKTRİK ELEKTRONİK kaşe ve imza">
         <div class="tk-signature-legend">Kaşe üzerine firma yetkilisi imzası</div>
       </div>
       <div class="tk-sign-box">
