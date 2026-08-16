@@ -134,4 +134,13 @@
     if(overlay&&!overlay.classList.contains('show'))removeMinimizedBar();
   });
   observer.observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['class']});
+
+  // Yeni teklif PDF görünümünü mevcut yazdırma akışına ekle.
+  if(!document.querySelector('script[data-tk-modern-quote-pdf]')){
+    const script=document.createElement('script');
+    script.src='./modern-quote-pdf.js';
+    script.dataset.tkModernQuotePdf='1';
+    script.defer=true;
+    document.head.appendChild(script);
+  }
 })();
