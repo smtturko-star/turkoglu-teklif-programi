@@ -1,4 +1,4 @@
-/* Türkoğlu teklif PDF'si: otomatik mavi mürekkep kaşe + özgün imza. */
+/* Türkoğlu teklif PDF'si: otomatik mavi mürekkep kaşe + özgün imza + kurumsal alt iletişim. */
 (function(){
   'use strict';
   if(window.__tkQuoteSignaturesInstalled)return;
@@ -10,7 +10,8 @@
     line:'Güvenlik Kamera ve Elektrik Sistemleri',
     person:'Samet Türkoğlu',
     phone:'0533 929 37 79',
-    email:'turkogluguvenlik3838@gmail.com'
+    email:'turkogluguvenlik3838@gmail.com',
+    slogan:'Güvenli Yarınlar İçin, Doğru Çözüm!'
   };
 
   function install(){
@@ -41,8 +42,16 @@
       #quotePrint .tk-approval-space:after{content:"İmza";position:absolute;left:0;bottom:-16px;font-size:8px;color:#94a3b8}
       #quotePrint .tk-sign-name{margin-top:21px;font-size:10px;color:#334155;font-weight:800}
       #quotePrint .tk-approval-note{margin-top:10px;padding:8px 10px;border-radius:9px;background:#f8fafc;border:1px solid #edf1f5;color:#64748b;font-size:8px;line-height:1.45}
+
+      /* Teklif PDF'sinin en altında kurumsal iletişim şeridi. */
+      #quotePrint .tk-company-footer{margin-top:22px;padding:14px 7px 4px;border-top:1px solid #cbd5e1;display:flex;align-items:center;justify-content:space-between;gap:18px;break-inside:avoid;page-break-inside:avoid;color:#183b73}
+      #quotePrint .tk-company-contact{display:flex;align-items:center;gap:22px;min-width:0;flex:1}
+      #quotePrint .tk-contact-item{display:flex;align-items:center;gap:7px;font-size:8.5px;font-weight:700;white-space:nowrap}
+      #quotePrint .tk-contact-icon{font-size:14px;line-height:1;color:#0758b7;font-weight:900}
+      #quotePrint .tk-company-slogan{font-family:"Segoe Script","Brush Script MT","Lucida Handwriting",cursive;font-size:16px;font-weight:600;font-style:italic;line-height:1.1;text-align:right;white-space:nowrap;color:#0758b7;transform:rotate(-2deg);letter-spacing:-.3px}
+      @media(max-width:800px){#quotePrint .tk-company-footer{flex-direction:column;align-items:flex-start}.tk-company-contact{flex-wrap:wrap;gap:10px}.tk-company-slogan{text-align:left}}
       @media(max-width:700px){#quotePrint .tk-signature-section{grid-template-columns:1fr}.tk-stamp-wrap{width:min(300px,88%)}#quotePrint .tk-sign-box{min-height:190px}}
-      @media print{#quotePrint .tk-signature-section{grid-template-columns:1fr 1fr}#quotePrint .tk-sign-box{box-shadow:none;background:#fff}#quotePrint .tk-real-stamp,#quotePrint .tk-stamp-signature{print-color-adjust:exact;-webkit-print-color-adjust:exact}}
+      @media print{#quotePrint .tk-signature-section{grid-template-columns:1fr 1fr}#quotePrint .tk-sign-box{box-shadow:none;background:#fff}#quotePrint .tk-real-stamp,#quotePrint .tk-stamp-signature,#quotePrint .tk-company-slogan{print-color-adjust:exact;-webkit-print-color-adjust:exact}}
     `;
     document.head.appendChild(s);
   }
@@ -54,6 +63,7 @@
     if(!root||!root.innerHTML.trim())return;
     install();
     root.querySelector('.tk-signature-section')?.remove();
+    root.querySelector('.tk-company-footer')?.remove();
 
     const q=getQuote();
     const customer=q.customers||q.customer||{};
@@ -91,7 +101,19 @@
         <div class="tk-approval-note">“Teklifi ve belirtilen şartları kabul ediyorum.”</div>
       </div>`;
 
-    (root.querySelector('.tk-quote-inner')||root).appendChild(section);
+    const inner=root.querySelector('.tk-quote-inner')||root;
+    inner.appendChild(section);
+
+    const footer=document.createElement('footer');
+    footer.className='tk-company-footer';
+    footer.innerHTML=`
+      <div class="tk-company-contact">
+        <div class="tk-contact-item"><span class="tk-contact-icon">⌖</span><span>${esc(FIRMA.line)}</span></div>
+        <div class="tk-contact-item"><span class="tk-contact-icon">☎</span><span>${esc(FIRMA.phone)}</span></div>
+        <div class="tk-contact-item"><span class="tk-contact-icon">✉</span><span>${esc(FIRMA.email)}</span></div>
+      </div>
+      <div class="tk-company-slogan">${esc(FIRMA.slogan)}</div>`;
+    inner.appendChild(footer);
   }
 
   function schedule(){requestAnimationFrame(()=>requestAnimationFrame(add))}
