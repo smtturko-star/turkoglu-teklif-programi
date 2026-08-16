@@ -40,7 +40,7 @@
       <div class="tk-sign-box">
         <div class="tk-sign-title">Firma Kaşe / İmza</div>
         <div class="tk-sign-sub">Teklif firma yetkilisi tarafından onaylanmıştır.</div>
-        <img class="tk-exact-stamp" src="./tk-stamp-signature.svg?v=4" alt="TÜRKOĞLU ELEKTRİK ELEKTRONİK kaşe ve imza">
+        <img class="tk-exact-stamp" src="./tk-stamp-signature.svg?v=5" alt="TÜRKOĞLU ELEKTRİK ELEKTRONİK kaşe ve imza">
         <div class="tk-signature-legend">Kaşe üzerine firma yetkilisi imzası</div>
       </div>
       <div class="tk-sign-box">
