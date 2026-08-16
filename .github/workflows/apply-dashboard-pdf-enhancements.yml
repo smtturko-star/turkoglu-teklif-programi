@@ -1,0 +1,49 @@
+name: Apply dashboard and PDF enhancements
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Add enhancement scripts to index
+        shell: python
+        run: |
+          from pathlib import Path
+          p = Path('index.html')
+          text = p.read_text(encoding='utf-8')
+          tags = [
+              '<script src="./dashboard-modal.js"></script>',
+              '<script src="./quote-signatures.js"></script>',
+          ]
+          changed = False
+          marker = '</body>'
+          insert = ''
+          for tag in tags:
+              if tag not in text:
+                  insert += '\n' + tag
+                  changed = True
+          if changed:
+              text = text.replace(marker, insert + '\n' + marker, 1)
+              p.write_text(text, encoding='utf-8')
+          print('index.html updated:', changed)
+
+      - name: Commit generated index update
+        run: |
+          if git diff --quiet -- index.html; then
+            echo "No index change needed."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git commit -m "Enable dashboard interactions and PDF stamp"
+          git push
