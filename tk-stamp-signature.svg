@@ -1,23 +1,24 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="551" height="177" viewBox="0 0 551 177">
+<svg xmlns="http://www.w3.org/2000/svg" width="620" height="205" viewBox="0 0 620 205">
   <g fill="#0758b7" stroke="#0758b7" stroke-linecap="round" stroke-linejoin="round">
-    <g fill="none" stroke-width="3" opacity=".86">
-      <rect x="58" y="20" width="270" height="92" rx="5" transform="rotate(-6 58 20)"/>
-      <rect x="63" y="25" width="260" height="82" rx="3" fill="none" stroke-width="1.1" opacity=".55" transform="rotate(-6 63 25)"/>
+    <!-- gerçek kaşe izi: hafif eğik, kompakt ve okunaklı -->
+    <g transform="rotate(-4 210 70)" fill="none" opacity=".82">
+      <rect x="45" y="22" width="335" height="102" rx="4" stroke-width="3"/>
+      <rect x="51" y="28" width="323" height="90" rx="3" stroke-width="1" opacity=".5"/>
     </g>
-    <g transform="rotate(-6 190 65)" font-family="Arial,Helvetica,sans-serif" text-anchor="middle">
-      <text x="193" y="45" font-size="17" font-weight="800">TÜRKOĞLU ELEKTRİK ELEKTRONİK</text>
-      <text x="193" y="62" font-size="11" font-weight="700">Güvenlik Kamera ve Elektrik Sistemleri</text>
-      <text x="193" y="78" font-size="10" font-weight="700">●  Samet Türkoğlu     ·</text>
-      <text x="193" y="92" font-size="10" font-weight="700">☎  0533 929 37 79</text>
-      <text x="193" y="106" font-size="9.5" font-weight="700">✉  turkogluguvenlik3838@gmail.com</text>
+    <g transform="rotate(-4 212 70)" font-family="Arial,Helvetica,sans-serif" text-anchor="middle">
+      <text x="212" y="48" font-size="15" font-weight="800">TÜRKOĞLU ELEKTRİK ELEKTRONİK</text>
+      <text x="212" y="65" font-size="10.5" font-weight="700">Güvenlik Kamera ve Elektrik Sistemleri</text>
+      <text x="212" y="81" font-size="9.5" font-weight="700">Samet Türkoğlu</text>
+      <text x="212" y="96" font-size="9.5" font-weight="700">Tel: 0533 929 37 79</text>
+      <text x="212" y="111" font-size="8.8" font-weight="700">E-posta: turkogluguvenlik3838@gmail.com</text>
     </g>
-    <g fill="none" opacity=".96">
-      <path stroke-width="4.2" d="M101 143 C123 121 127 155 145 137 C160 121 150 89 166 89 C183 90 164 128 188 127 C208 126 220 94 232 101 C244 108 226 136 248 132 C272 128 280 83 296 86 C312 89 295 128 318 123 C342 118 351 79 367 84 C382 89 368 119 389 115 C412 111 424 87 439 91 C455 96 438 119 461 114 C484 109 506 91 540 83"/>
-      <path stroke-width="3" d="M82 158 C140 145 183 151 235 141 C292 130 341 137 397 125 C447 114 492 123 542 111"/>
-      <path stroke-width="2" d="M219 136 C237 117 258 105 274 113 C288 121 276 139 259 151 C246 160 240 170 253 176"/>
-      <path stroke-width="2" d="M347 116 C363 96 385 89 397 101 C408 112 401 126 388 136"/>
-      <path stroke-width="2" d="M410 111 C426 91 449 84 462 95 C474 105 468 119 454 128"/>
+
+    <!-- onaylanan büyük, özgün imza: kaşenin üstünden geçiyor -->
+    <g fill="none" stroke-width="4" opacity=".94">
+      <path d="M118 160 C150 145 171 133 188 132 C204 131 195 153 207 154 C222 155 232 117 247 111 C263 105 257 142 270 145 C284 148 300 112 315 110 C330 108 319 144 335 145 C351 146 366 112 382 110 C398 109 388 143 403 142 C423 141 444 111 458 111 C472 111 460 140 479 137 C500 134 522 120 548 112"/>
+      <path stroke-width="3.2" d="M78 177 C145 165 191 169 244 159 C302 148 352 154 407 145 C462 136 514 141 574 126"/>
+      <path stroke-width="2.6" d="M229 151 C247 137 264 122 276 126 C288 130 281 148 267 160 C255 171 248 184 260 194"/>
+      <path stroke-width="2.5" d="M383 143 C399 128 416 119 427 125 C438 131 432 143 419 152"/>
     </g>
-    <g opacity=".7" fill="#0758b7"><circle cx="201" cy="151" r="3"/><circle cx="365" cy="139" r="2.4"/><circle cx="472" cy="126" r="2"/></g>
   </g>
 </svg>
