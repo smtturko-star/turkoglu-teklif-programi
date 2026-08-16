@@ -1,0 +1,1 @@
+PDF tasarım geliştirmesi öncesi referans: modern-quote-pdf.js commit SHA 86764ccd835a72e1a85e4dbd51c5a1465a333d37.
