@@ -20,3 +20,5 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 })();
 /* Modern tema ve animasyon dosyasını mevcut uygulama mantığına dokunmadan yükle. */
 (function(){const load=()=>{if(document.querySelector('script[data-tk-motion]'))return;const s=document.createElement('script');s.src='./modern-animations.js';s.dataset.tkMotion='1';s.defer=true;document.head.appendChild(s)};if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',load,{once:true});else load()})();
+/* Dashboard KPI hızlı kontrol penceresini yükle. */
+(function(){const load=()=>{if(document.querySelector('script[data-tk-dashboard-modal]'))return;const s=document.createElement('script');s.src='./dashboard-modal.js';s.dataset.tkDashboardModal='1';s.defer=true;document.head.appendChild(s)};if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',load,{once:true});else load()})();
