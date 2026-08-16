@@ -10,10 +10,10 @@
     const s=document.createElement('style');s.id='tk-quote-signature-style';
     s.textContent=`
       #quotePrint .tk-signature-section{margin-top:18px;display:grid;grid-template-columns:1fr 1fr;gap:16px;break-inside:avoid;page-break-inside:avoid}
-      #quotePrint .tk-sign-box{min-height:190px;border:1px solid #dbe3ec;border-radius:12px;background:#fff;padding:12px 14px;position:relative;break-inside:avoid;page-break-inside:avoid;overflow:hidden}
+      #quotePrint .tk-sign-box{min-height:240px;border:1px solid #dbe3ec;border-radius:12px;background:#fff;padding:12px 14px;position:relative;break-inside:avoid;page-break-inside:avoid;overflow:hidden}
       #quotePrint .tk-sign-title{font-size:10px;letter-spacing:.08em;text-transform:uppercase;font-weight:900;color:#334155}
       #quotePrint .tk-sign-sub{font-size:8px;color:#64748b;margin-top:3px}
-      #quotePrint .tk-exact-stamp{position:absolute;left:50%;top:58%;width:min(520px,96%);height:auto;display:block;transform:translate(-50%,-50%);mix-blend-mode:multiply;opacity:.94}
+      #quotePrint .tk-exact-stamp{position:absolute;left:50%;top:56%;width:96%;max-width:560px;height:auto;display:block;transform:translate(-50%,-50%);opacity:1;mix-blend-mode:normal}
       #quotePrint .tk-signature-legend{position:absolute;left:14px;bottom:10px;font-size:7px;color:#94a3b8}
       #quotePrint .tk-approval-space{height:76px;margin-top:28px;border-bottom:1px dashed #cbd5e1;position:relative}
       #quotePrint .tk-approval-space:after{content:"İmza";position:absolute;left:0;bottom:-15px;font-size:7px;color:#94a3b8}
@@ -40,7 +40,7 @@
       <div class="tk-sign-box">
         <div class="tk-sign-title">Firma Kaşe / İmza</div>
         <div class="tk-sign-sub">Teklif firma yetkilisi tarafından onaylanmıştır.</div>
-        <img class="tk-exact-stamp" src="./tk-stamp-signature.svg?v=5" alt="TÜRKOĞLU ELEKTRİK ELEKTRONİK kaşe ve imza">
+        <img class="tk-exact-stamp" src="./tk-stamp-signature-approved.png?v=1" alt="TÜRKOĞLU ELEKTRİK ELEKTRONİK kaşe ve imza">
         <div class="tk-signature-legend">Kaşe üzerine firma yetkilisi imzası</div>
       </div>
       <div class="tk-sign-box">
