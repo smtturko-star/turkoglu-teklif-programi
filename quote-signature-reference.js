@@ -4,7 +4,8 @@
   if(window.__tkSignatureReferenceInstalled)return;
   window.__tkSignatureReferenceInstalled=true;
 
-  const SRC='./tk-stamp-signature.svg';
+  // Yazdırma penceresinde göreli yol kırılmasın diye SVG'yi GitHub raw üzerinden mutlak URL ile çağır.
+  const SRC='https://raw.githubusercontent.com/smtturko-star/turkoglu-teklif-programi/main/tk-stamp-signature.svg?v=20260816-1';
 
   function apply(){
     const root=document.getElementById('quotePrint');
@@ -19,6 +20,7 @@
     img.src=SRC;
     img.alt='TÜRKOĞLU ELEKTRİK ELEKTRONİK kaşe ve imza';
     img.className='tk-approved-stamp-signature';
+    img.draggable=false;
     wrap.appendChild(img);
   }
 
@@ -52,8 +54,8 @@
         object-fit:contain !important;
         object-position:center !important;
         transform:none !important;
-        mix-blend-mode:multiply !important;
-        opacity:.93 !important;
+        mix-blend-mode:normal !important;
+        opacity:1 !important;
       }
       @media print{
         #quotePrint .tk-approved-stamp-signature{
