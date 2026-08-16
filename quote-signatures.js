@@ -5,7 +5,6 @@
   window.__tkQuoteSignaturesInstalled=true;
   const esc=s=>typeof window.esc==='function'?window.esc(s):String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
   const FIRMA={line:'Güvenlik Kamera ve Elektrik Sistemleri',phone:'0533 929 37 79',email:'turkogluguvenlik3838@gmail.com',slogan:'Güvenli Yarınlar İçin, Doğru Çözüm!'};
-
   function install(){
     if(document.getElementById('tk-quote-signature-style'))return;
     const s=document.createElement('style');s.id='tk-quote-signature-style';
@@ -14,7 +13,7 @@
       #quotePrint .tk-sign-box{min-height:190px;border:1px solid #dbe3ec;border-radius:12px;background:#fff;padding:12px 14px;position:relative;break-inside:avoid;page-break-inside:avoid;overflow:hidden}
       #quotePrint .tk-sign-title{font-size:10px;letter-spacing:.08em;text-transform:uppercase;font-weight:900;color:#334155}
       #quotePrint .tk-sign-sub{font-size:8px;color:#64748b;margin-top:3px}
-      #quotePrint .tk-exact-stamp{position:absolute;left:50%;top:57%;width:min(520px,96%);height:auto;display:block;transform:translate(-50%,-50%);mix-blend-mode:multiply;opacity:.94;}
+      #quotePrint .tk-exact-stamp{position:absolute;left:50%;top:58%;width:min(520px,96%);height:auto;display:block;transform:translate(-50%,-50%);mix-blend-mode:multiply;opacity:.94}
       #quotePrint .tk-signature-legend{position:absolute;left:14px;bottom:10px;font-size:7px;color:#94a3b8}
       #quotePrint .tk-approval-space{height:76px;margin-top:28px;border-bottom:1px dashed #cbd5e1;position:relative}
       #quotePrint .tk-approval-space:after{content:"İmza";position:absolute;left:0;bottom:-15px;font-size:7px;color:#94a3b8}
@@ -27,11 +26,7 @@
       #quotePrint .tk-company-slogan{font-family:"Segoe Script","Brush Script MT","Lucida Handwriting",cursive;font-size:14px;font-weight:600;font-style:italic;line-height:1.1;text-align:right;white-space:nowrap;color:#0758b7;transform:rotate(-2deg)}
       @media(max-width:800px){#quotePrint .tk-company-footer{flex-direction:column;align-items:flex-start}.tk-company-contact{flex-wrap:wrap;gap:10px}.tk-company-slogan{text-align:left}}
       @media(max-width:700px){#quotePrint .tk-signature-section{grid-template-columns:1fr}.tk-exact-stamp{width:94%!important}}
-      @media print{
-        #quotePrint .tk-signature-section{grid-template-columns:1fr 1fr}
-        #quotePrint .tk-sign-box{box-shadow:none;background:#fff}
-        #quotePrint .tk-exact-stamp,#quotePrint .tk-company-slogan{print-color-adjust:exact;-webkit-print-color-adjust:exact}
-      }
+      @media print{#quotePrint .tk-signature-section{grid-template-columns:1fr 1fr}#quotePrint .tk-sign-box{box-shadow:none;background:#fff}#quotePrint .tk-exact-stamp,#quotePrint .tk-company-slogan{print-color-adjust:exact;-webkit-print-color-adjust:exact}}
     `;
     document.head.appendChild(s);
   }
@@ -45,7 +40,7 @@
       <div class="tk-sign-box">
         <div class="tk-sign-title">Firma Kaşe / İmza</div>
         <div class="tk-sign-sub">Teklif firma yetkilisi tarafından onaylanmıştır.</div>
-        <img class="tk-exact-stamp" src="./tk-stamp-signature.svg?v=3" alt="TÜRKOĞLU ELEKTRİK ELEKTRONİK kaşe ve imza">
+        <img class="tk-exact-stamp" src="./tk-stamp-signature.svg?v=4" alt="TÜRKOĞLU ELEKTRİK ELEKTRONİK kaşe ve imza">
         <div class="tk-signature-legend">Kaşe üzerine firma yetkilisi imzası</div>
       </div>
       <div class="tk-sign-box">
