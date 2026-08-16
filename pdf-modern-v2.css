@@ -1,0 +1,40 @@
+/* Modern PDF V2 tasarım katmanı */
+#quotePrint{font-family:Inter,system-ui,-apple-system,"Segoe UI",Arial,sans-serif;color:#172033;background:#fff}
+#quotePrint .tk-quote-shell{overflow:hidden;border:1px solid #e2e8f0;border-radius:24px;background:#fff;box-shadow:0 22px 70px rgba(15,23,42,.10)}
+#quotePrint .tk-quote-accent{height:8px;background:linear-gradient(90deg,#0f172a,#1d4ed8 52%,#06b6d4)}
+#quotePrint .tk-quote-inner{padding:32px 34px 30px}
+#quotePrint .qhead{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:28px;align-items:start;border:0!important;padding:0 0 24px!important;margin:0!important}
+#quotePrint .qlogo{max-width:155px;max-height:78px;object-fit:contain;margin-bottom:8px}
+#quotePrint .qhead h2{font-size:26px;line-height:1.1;letter-spacing:-.03em;margin:2px 0 6px;color:#0f172a}
+#quotePrint .qhead b{font-size:11px;color:#2563eb;text-transform:uppercase;letter-spacing:.12em}
+#quotePrint .qhead .muted{font-size:11px;color:#64748b;line-height:1.65}
+#quotePrint .tk-quote-meta{min-width:205px;text-align:right;padding:14px 16px;border:1px solid #dbeafe;border-radius:16px;background:linear-gradient(145deg,#f8fbff,#eff6ff)}
+#quotePrint .tk-quote-meta .tk-label{display:block;font-size:9px;font-weight:900;color:#2563eb;letter-spacing:.14em;text-transform:uppercase;margin-bottom:7px}
+#quotePrint .tk-quote-meta .tk-number{display:block;font-size:21px;font-weight:950;color:#0f172a;letter-spacing:-.025em;margin-bottom:7px}
+#quotePrint .tk-quote-meta .tk-date{font-size:10px;color:#64748b;line-height:1.7}
+#quotePrint .tk-customer-box{margin:0 0 22px!important;padding:17px 18px!important;border:1px solid #bfdbfe!important;border-radius:16px!important;background:linear-gradient(135deg,#f8fbff,#eef6ff)!important}
+#quotePrint .tk-customer-label,#quotePrint .tk-section-title{font-size:9px;font-weight:900;letter-spacing:.13em;text-transform:uppercase;color:#2563eb;margin-bottom:7px}
+#quotePrint .tk-customer-name{font-size:18px;font-weight:900;color:#0f172a}
+#quotePrint .tk-customer-meta{font-size:10.5px;line-height:1.65;color:#64748b;margin-top:3px}
+#quotePrint table.tk-quote-table{border-collapse:separate!important;border-spacing:0!important;width:100%!important;border:1px solid #e2e8f0!important;border-radius:16px!important;overflow:hidden;margin-top:8px}
+#quotePrint table.tk-quote-table thead th{padding:12px 10px!important;background:#f8fafc!important;color:#475569!important;border-bottom:1px solid #e2e8f0!important;font-size:9px!important;letter-spacing:.09em!important}
+#quotePrint table.tk-quote-table tbody td{padding:12px 10px!important;font-size:10.5px!important;color:#334155;border-bottom:1px solid #edf2f7!important}
+#quotePrint table.tk-quote-table tbody tr:nth-child(even){background:#fbfdff}
+#quotePrint table.tk-quote-table tbody tr:last-child td{border-bottom:0!important}
+#quotePrint table.tk-quote-table tbody .thumb{width:54px!important;height:44px!important;border-radius:10px!important;border:1px solid #e2e8f0!important;background:#fff!important}
+#quotePrint .summary.tk-modern-summary{max-width:400px!important;margin-top:18px!important;padding:17px 18px!important;border:1px solid #e2e8f0!important;border-radius:16px!important;background:linear-gradient(180deg,#f8fafc,#f1f5f9)!important;grid-template-columns:1fr auto!important;gap:7px!important}
+#quotePrint .summary.tk-modern-summary span{font-size:10.5px;color:#64748b}
+#quotePrint .summary.tk-modern-summary strong{font-size:12px;color:#0f172a}
+#quotePrint .summary.tk-modern-summary strong.total{font-size:24px;color:#1d4ed8;letter-spacing:-.03em}
+#quotePrint .tk-note-box,#quotePrint .tk-bank-box{margin-top:18px!important;padding:16px 18px!important;border:1px solid #e2e8f0!important;border-radius:16px!important;background:#fff!important}
+#quotePrint .tk-bank-box{background:#f8fafc!important}
+#quotePrint .tk-note-box p{margin:0;color:#475569;font-size:10.5px;line-height:1.75;white-space:pre-line}
+#quotePrint .tk-bank-line{font-size:10.5px;color:#475569;line-height:1.75}
+#quotePrint .tk-footer{margin-top:22px!important;padding-top:14px!important;border-top:1px solid #e2e8f0!important;color:#64748b!important;font-size:9.5px!important;line-height:1.7!important}
+#quotePrint .tk-signatures{display:grid;grid-template-columns:1fr 1fr;gap:70px;margin-top:36px;padding-top:8px}
+#quotePrint .tk-signature{padding-top:28px;border-top:1px solid #cbd5e1;text-align:center;color:#64748b;font-size:9.5px}
+#quotePrint .tk-total-strip{display:flex;align-items:center;justify-content:space-between;gap:18px;margin-top:20px;padding:16px 18px;border-radius:16px;background:linear-gradient(135deg,#0f172a,#1e3a8a);color:#fff}
+#quotePrint .tk-total-strip .label{font-size:9px;text-transform:uppercase;letter-spacing:.12em;opacity:.7;font-weight:900}
+#quotePrint .tk-total-strip .value{font-size:22px;font-weight:950;letter-spacing:-.03em}
+@media(max-width:700px){#quotePrint .tk-quote-inner{padding:22px 17px}.qhead{grid-template-columns:1fr!important}.tk-quote-meta{text-align:left!important;min-width:0!important}.tk-signatures{grid-template-columns:1fr!important;gap:30px!important}}
+@media print{#quotePrint .tk-quote-shell{border:0!important;box-shadow:none!important;border-radius:0!important}#quotePrint .tk-quote-accent{height:5px!important}#quotePrint .tk-quote-inner{padding:8mm 8mm 7mm!important}#quotePrint .tk-customer-box,#quotePrint .tk-note-box,#quotePrint .tk-bank-box,#quotePrint .tk-total-strip,#quotePrint .tk-signatures{break-inside:avoid}#quotePrint table.tk-quote-table{break-inside:auto!important}#quotePrint table.tk-quote-table tr{break-inside:avoid!important}#quotePrint table.tk-quote-table thead{display:table-header-group!important}}
