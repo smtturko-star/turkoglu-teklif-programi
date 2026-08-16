@@ -49,4 +49,5 @@
   loadEnhancement('./quote-signatures.js','tkQuoteSignatureEnhancement');
   loadEnhancement('./quote-search-fix.js','tkQuoteSearchFix');
   loadEnhancement('./quote-print-tuning.js','tkQuotePrintTuning');
+  loadEnhancement('./quote-signature-reference.js','tkQuoteSignatureReference');
 })();
